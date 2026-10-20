@@ -1,0 +1,277 @@
+<!-- manage_users.html -->
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert.alert-dismissible, .alert.alert-success, .alert.alert-danger, .alert-info {
+        display: none !important;
+    }
+    .role-badge {
+        transition: all 0.2s ease;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .filter-card {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    }
+    .stats-chip {
+        background: #F0F4F8;
+        border-radius: 40px;
+        padding: 6px 14px;
+        font-size: 0.85rem;
+    }
+    .unit-badge {
+        background: #E8F0FE;
+        color: #1E4D6F;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-people-fill fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: #0B2B40;">Manage Users</h1>
+                   
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('admin.create_user') }}" class="btn btn-modern shadow-lg">
+                <i class="bi bi-person-plus-fill me-2"></i> Create New User
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="row g-3 mb-4" data-aos="fade-up">
+        <div class="col-auto">
+            <div class="stats-chip"><i class="bi bi-people me-1"></i> Total: <strong>{{ users|length }}</strong></div>
+        </div>
+        <div class="col-auto">
+            <div class="stats-chip"><i class="bi bi-check-circle-fill text-success me-1"></i> Active: <strong>{{ users|selectattr('is_active')|list|length }}</strong></div>
+        </div>
+        <div class="col-auto">
+            <div class="stats-chip"><i class="bi bi-shield-check text-info me-1"></i> Verified: <strong>{{ users|selectattr('is_verified')|list|length }}</strong></div>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="filter-card p-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i> Search</label>
+                <input type="text" id="searchInput" class="form-control rounded-pill" placeholder="Name, employee ID, unit...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-tag me-1"></i> Role</label>
+                <select id="roleFilter" class="form-select rounded-pill">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="bu_user">BU Team</option>
+                    <option value="head_of_it">Head of IT</option>
+                    <option value="record_assistant">Record Assistant</option>
+                    <option value="finance_controller">Finance Controller</option>
+                    <option value="payment_lolc_technologies">Payment Tech</option>
+                    <option value="payment_lolc_finance">Payment Finance</option>
+                    <option value="payment_company_user">Payment Company</option>
+                    <option value="supervisor">Supervisor</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-power me-1"></i> Status</label>
+                <select id="statusFilter" class="form-select rounded-pill">
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary rounded-pill w-100" onclick="clearFilters()">
+                    <i class="bi bi-eraser me-1"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="modern-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="usersTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Employee ID</th>
+                        <th>Name</th>
+                        <th>Unit</th>
+                        <th>Company</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Verified</th>
+                        <th>Created</th>
+                        <th class="text-center pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr data-role="{{ user.role }}" data-status="{% if user.is_active %}active{% else %}inactive{% endif %}" 
+                        data-search="{{ user.full_name|lower }} {{ user.email|lower }} {{ user.employee_id|lower }} {{ user.unit.name|lower if user.unit else '' }}">
+                        <td class="ps-4 fw-semibold">{{ user.employee_id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-person fs-6 text-primary"></i>
+                                </div>
+                                {{ user.full_name }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if user.unit %}
+                                <span class="unit-badge">
+                                    <i class="bi bi-diagram-3 me-1"></i> {{ user.unit.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark rounded-pill px-3">{{ user.company.name if user.company else '—' }}</span>
+                        </td>
+                        <td>
+                            <span class="badge role-badge px-3 py-2 rounded-pill 
+                                {% if user.role == 'admin' %}bg-danger
+                                {% elif user.role == 'finance_controller' %}bg-success
+                                {% elif user.role in ['payment_lolc_technologies', 'payment_lolc_finance', 'payment_company_user'] %}bg-warning text-dark
+                                {% elif user.role == 'supervisor' %}bg-secondary
+                                {% else %}bg-info text-dark{% endif %}">
+                                <i class="bi {% if user.role == 'admin' %}bi-shield-lock{% elif user.role == 'bu_user' %}bi-clock-history{% else %}bi-person-badge{% endif %} me-1"></i>
+                                {{ user.role|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i> Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2"><i class="bi bi-pause-circle-fill me-1"></i> Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_verified %}
+                                <span class="badge bg-success-subtle text-success rounded-pill"><i class="bi bi-envelope-check-fill"></i> Yes</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning rounded-pill"><i class="bi bi-envelope-exclamation-fill"></i> Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-nowrap small">{{ user.created_at.strftime('%d %b %Y') }}</td>
+                        <td class="text-center pe-4">
+                            <div class="btn-group btn-group-sm gap-1">
+                                <a href="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" 
+                                   class="btn btn-sm {% if user.is_active %}btn-outline-warning rounded-pill{% else %}btn-outline-success rounded-pill{% endif %}"
+                                   title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                    <i class="bi {% if user.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
+                                </a>
+                                <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-primary rounded-pill" title="Edit User">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if user.id != current_user.id %}
+                                <button class="btn btn-sm btn-outline-danger rounded-pill" 
+                                        onclick="confirmDelete({{ user.id }}, '{{ user.email }}')"
+                                        title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% if user.id != current_user.id %}
+                            <form id="delete-form-{{ user.id }}" action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" style="display: none;"></form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDelete(userId, userEmail) {
+    Swal.fire({
+        title: 'Delete User?',
+        text: `Remove "${userEmail}" permanently? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '<i class="bi bi-trash"></i> Yes, delete',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(`delete-form-${userId}`).submit();
+        }
+    });
+}
+
+function filterUsers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const role = document.getElementById('roleFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    rows.forEach(row => {
+        const searchData = row.getAttribute('data-search') || '';
+        const userRole = row.getAttribute('data-role');
+        const userStatus = row.getAttribute('data-status');
+        let show = true;
+        if (searchTerm && !searchData.includes(searchTerm)) show = false;
+        if (role && userRole !== role) show = false;
+        if (status && userStatus !== status) show = false;
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('roleFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    filterUsers();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchInput')?.addEventListener('keyup', filterUsers);
+    document.getElementById('roleFilter')?.addEventListener('change', filterUsers);
+    document.getElementById('statusFilter')?.addEventListener('change', filterUsers);
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E4D6F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

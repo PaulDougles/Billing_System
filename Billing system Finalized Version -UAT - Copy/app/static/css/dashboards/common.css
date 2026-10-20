@@ -1,0 +1,143 @@
+/* ========================================
+   DASHBOARDS/COMMON.CSS - Shared Dashboard Styles
+   ======================================== */
+
+/* Dashboard Container */
+.dashboard-container {
+    padding: 0;
+}
+
+/* Dashboard Header Icon */
+.dashboard-header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(30, 58, 95, 0.1);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Company Avatar */
+.company-avatar {
+    width: 36px;
+    height: 36px;
+    background: rgba(30, 58, 95, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+}
+
+tr:hover .company-avatar {
+    background: rgba(30, 58, 95, 0.2);
+    transform: scale(1.05);
+}
+
+/* Unit Avatar */
+.unit-avatar {
+    width: 36px;
+    height: 36px;
+    background: rgba(30, 58, 95, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+}
+
+tr:hover .unit-avatar {
+    background: rgba(30, 58, 95, 0.2);
+    transform: scale(1.05);
+}
+
+/* User Avatar */
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: rgba(30, 58, 95, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Unit Badge */
+.unit-badge {
+    background: rgba(30, 58, 95, 0.1);
+    color: var(--navy-mid);
+    border-radius: var(--border-radius-pill);
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.unit-badge:hover {
+    background: var(--navy-mid);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Company Badge */
+.company-badge {
+    background: #e7f1ff;
+    color: var(--navy-deep);
+    border-radius: 40px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Stats Chip */
+.stats-chip {
+    background: #F0F4F8;
+    border-radius: 40px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+}
+
+/* Role Badge */
+.role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.role-bu { background: #DBEAFE; color: #1E40AF; }
+.role-supervisor { background: #D1FAE5; color: #065F46; }
+.role-head { background: #FEF3C7; color: #92400E; }
+.role-finance { background: #E0E7FF; color: #3730A3; }
+.role-payment { background: #FCE7F3; color: #9D174D; }
+.role-admin { background: #FEE2E2; color: #991B1B; }
+
+/* Invoice Badge */
+.invoice-badge {
+    padding: 4px 12px;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.invoice-generated {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.invoice-pending {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+/* No Records Message */
+.no-records-message {
+    background: #FEF3C7;
+    border-left: 4px solid var(--accent-warning);
+    border-radius: var(--border-radius-md);
+    padding: 1rem 1.5rem;
+}

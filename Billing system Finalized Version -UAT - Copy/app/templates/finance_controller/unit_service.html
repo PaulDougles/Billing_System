@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Units in {{ company.name }} - Finance Controller{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: #f8f9fa;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    
+    .btn-info {
+        background: var(--accent-info);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 6px 16px;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .btn-info:hover {
+        background: #1E6A8A;
+        transform: translateY(-1px);
+    }
+    
+    .btn-outline-secondary {
+        border-radius: var(--border-radius-pill);
+        padding: 8px 20px;
+    }
+    
+    .card-header-custom {
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .company-avatar {
+        width: 48px;
+        height: 48px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .unit-avatar {
+        width: 36px;
+        height: 36px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    tr:hover .unit-avatar {
+        background: rgba(30, 58, 95, 0.2);
+        transform: scale(1.05);
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    .status-approved {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    .status-rejected {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+    
+    .tfoot-total td {
+        border-top: 2px solid #E2E8F0;
+        background-color: #F8FAFE;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="company-avatar">
+                    <i class="bi bi-building fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">{{ company.name }}</h1>
+                    <p class="text-secondary-emphasis mt-1">
+                        Units with 
+                        <span class="status-badge status-{{ status }}">
+                            {{ status|title }} Services
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('finance_controller.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Units Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden" data-aos="fade-up">
+        <div class="card-header-custom bg-primary text-white">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-diagram-3 fs-5"></i>
+                <h5 class="mb-0 fw-semibold">Units with {{ status|title }} Services</h5>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Unit Name</th>
+                            <th class="text-center">Services</th>
+                            <th class="text-end">Total Amount (Rs)</th>
+                            <th class="text-center pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for unit in units %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="unit-avatar">
+                                        <i class="bi bi-diagram-3 {% if status == 'pending' %}text-warning{% elif status == 'approved' %}text-success{% else %}text-danger{% endif %}"></i>
+                                    </div>
+                                    <strong>{{ unit.name }}</strong>
+                                </div>
+                             </div>
+                            </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if status == 'pending' %}bg-warning bg-opacity-15 text-warning{% elif status == 'approved' %}bg-success bg-opacity-15 text-success{% else %}bg-danger bg-opacity-15 text-danger{% endif %} rounded-pill px-3 py-1">
+                                    {{ unit.service_count }} Service(s)
+                                </span>
+                             </div>
+                            </div>
+                            </td>
+                            <td class="text-end fw-bold {% if status == 'pending' %}text-warning{% elif status == 'approved' %}text-success{% else %}text-danger{% endif %}">
+                                Rs {{ "{:,.2f}".format(unit.total_amount) }}
+                             </div>
+                            </div>
+                            </td>
+                            <td class="text-center pe-4">
+                                <a href="{{ url_for('finance_controller.unit_details', unit_id=unit.id) }}?status={{ status }}&month={{ selected_month }}&year={{ selected_year }}" class="btn btn-info rounded-pill px-3">
+                                    <i class="bi bi-eye me-1"></i> View Services
+                                </a>
+                             </div>
+                            </div>
+                            </td>
+                         </div>
+                        </div>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-2 mb-0">No units with {{ status }} services</p>
+                                <small>All services have been processed</small>
+                             </div>
+                            </div>
+                            </td>
+                         </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                    {% if units %}
+                    <tfoot class="tfoot-total">
+                        <tr>
+                            <td colspan="2" class="text-end fw-bold ps-4">Total:</td>
+                            <td class="text-end fw-bold {% if status == 'pending' %}text-warning{% elif status == 'approved' %}text-success{% else %}text-danger{% endif %} pe-4">
+                                Rs {{ "{:,.2f}".format(units|sum(attribute='total_amount')) }}
+                            </td>
+                            <td class="pe-4"></td>
+                         </>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Flash messages handling
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+
+<style>
+    .bg-opacity-15 {
+        --bs-bg-opacity: 0.15;
+    }
+    .bg-warning.bg-opacity-15 {
+        background-color: rgba(217, 119, 6, 0.15) !important;
+    }
+    .bg-success.bg-opacity-15 {
+        background-color: rgba(5, 150, 105, 0.15) !important;
+    }
+    .bg-danger.bg-opacity-15 {
+        background-color: rgba(220, 38, 38, 0.15) !important;
+    }
+</style>
+{% endblock %}

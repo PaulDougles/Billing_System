@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Ready for Invoicing</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 20px 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; margin: 10px 0; }
+        .status-approved { background-color: #4CAF50; color: white; }
+        .btn { display: inline-block; padding: 12px 24px; margin: 20px 0; background: #2c3e50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        .btn-success { background-color: #28a745; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .details-table td { padding: 8px; border-bottom: 1px solid #eee; }
+        .details-table td:first-child { font-weight: bold; width: 35%; }
+        .amount-highlight { font-weight: bold; color: #28a745; }
+        .comment-box { background: #f0f7ff; border-left: 4px solid #3498db; padding: 12px; margin: 15px 0; border-radius: 4px; }
+        .action-list { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; border-top: 1px solid #eee; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Invoice System</h1>
+        <p>Time-based Billing Platform</p>
+    </div>
+    <div class="content">
+<h2>Hello {{ payment_user.first_name }} {{ payment_user.last_name }},</h2>
+
+<p>A service entry has been <strong>approved by Finance Controller</strong> and is now ready for invoice generation.</p>
+
+<div class="status-badge status-approved">
+    ✓ READY FOR INVOICING
+</div>
+
+<h3>📋 Service Details</h3>
+<table class="details-table">
+    <tr>
+        <td>Company</td>
+        <td><strong>{{ company.name if company else 'N/A' }}</strong></td>
+    </tr>
+    <tr>
+        <td>Submitted By</td>
+        <td><strong>{{ bu_user.full_name }}</strong></td>
+    </tr>
+    <tr>
+        <td>Description</td>
+        <td>{{ service.service_description }}</td>
+    </tr>
+    <tr>
+        <td>Total Amount</td>
+        <td><span class="amount-highlight">Rs {{ "%.2f"|format(service.total_amount) }}</span></td>
+    </tr>
+</table>
+
+{% if service.finance_approval_comment %}
+<div class="comment-box">
+    <strong>💬 Finance Controller Comment:</strong><br><br>
+    {{ service.finance_approval_comment }}
+</div>
+{% endif %}
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ dashboard_url }}" class="btn btn-success">💼 Go to Dashboard</a>
+</div>

@@ -1,0 +1,791 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.name }} Dashboard - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .stat-card {
+        transition: all 0.2s ease;
+        border-radius: 24px;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(10, 37, 64, 0.12);
+    }
+    
+    .company-avatar {
+        width: 48px;
+        height: 48px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .resource-chip {
+        background: #F1F5F9;
+        padding: 4px 10px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        display: inline-block;
+        margin: 2px;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: var(--navy-deep);
+        color: white;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+        padding: 0.75rem;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    
+    .btn-outline-info {
+        border-color: var(--accent-info);
+        color: var(--accent-info);
+        border-radius: var(--border-radius-pill);
+    }
+    .btn-outline-info:hover {
+        background: var(--accent-info);
+        border-color: var(--accent-info);
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+        border-radius: var(--border-radius-pill);
+    }
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-info {
+        background: var(--accent-info);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 8px 20px;
+    }
+    .btn-info:hover {
+        background: #1E6A8A;
+        transform: translateY(-1px);
+    }
+    
+    .modal-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .invoice-badge {
+        padding: 4px 12px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .invoice-generated {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    .invoice-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .bg-gradient-primary {
+        background: var(--bg-active) !important;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Modal Summary Card Styles */
+    .summary-card-modal {
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .card-loit-total { background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%); color: white; }
+    .card-lolc-showback { background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%); color: white; }
+    .card-grand-total { background: linear-gradient(135deg, #059669 0%, #10B981 100%); color: white; }
+    
+    .amount-cb { color: #059669; font-weight: 600; }
+    .amount-sb { color: #D97706; font-weight: 600; }
+    .amount-lolc { color: #7C3AED; font-weight: 600; }
+    .amount-total { color: #1E3A5F; font-weight: 700; }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .info-item {
+        background: #F8FAFE;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        border-left: 3px solid #2C7DA0;
+    }
+    .info-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #64748B;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .info-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1E293B;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-approved { background: #D1FAE5; color: #065F46; }
+    .status-pending { background: #FEF3C7; color: #92400E; }
+    .status-rejected { background: #FEE2E2; color: #991B1B; }
+    
+    /* ================================================
+       FIX: Keep numeric columns in ONE LINE
+       ================================================ */
+    
+    /* Description cell hover in modal table */
+    #serviceDetailsBody .desc-cell {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        word-break: break-word;
+        white-space: normal;
+    }
+    #serviceDetailsBody .desc-cell:hover {
+        background-color: #e8f0fe;
+    }
+
+    /* Resource column - can wrap */
+    #serviceDetailsBody .table td:nth-child(1) {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Description column - can wrap */
+    #serviceDetailsBody .table td:nth-child(2) {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Numeric columns - NO WRAP */
+    #serviceDetailsBody .table td:nth-child(3),
+    #serviceDetailsBody .table td:nth-child(4),
+    #serviceDetailsBody .table td:nth-child(5),
+    #serviceDetailsBody .table td:nth-child(6),
+    #serviceDetailsBody .table td:nth-child(7) {
+        white-space: nowrap;
+    }
+
+    /* Table headers - NO WRAP */
+    #serviceDetailsBody .table th {
+        white-space: nowrap;
+    }
+
+    /* Quantity badge styling */
+    .quantity-badge {
+        display: inline-block;
+        background: #E2E8F0;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    @media print {
+        .btn-group, .btn, .modal-footer, .navbar, .sidebar, .sidebar-toggle {
+            display: none !important;
+        }
+        .modal-content {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Welcome Banner -->
+    {% include 'components/welcome_banner.html' %}
+    
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="company-avatar">
+                    <i class="bi bi-building fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">{{ company.name }} Dashboard</h1>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary rounded-pill px-4" onclick="location.reload()">
+                    <i class="bi bi-arrow-repeat me-2"></i> Refresh
+                </button>
+                <a href="{{ url_for('payment.company_reports') }}" class="btn btn-info rounded-pill px-4">
+                    <i class="bi bi-file-text me-2"></i> Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month/Year Filter Section -->
+    <div class="filter-section" data-aos="fade-up">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label class="form-label fw-semibold mb-1">Month</label>
+                <select name="month" class="form-select" style="width: 120px;">
+                    <option value="">All Months</option>
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-semibold mb-1">Year</label>
+                <select name="year" class="form-select" style="width: 110px;">
+                    <option value="">All Years</option>
+                    {% for y in range(2020, 2031) %}
+                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('payment.company_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-repeat me-1"></i> Current Month
+                </a>
+            </div>
+            <div class="col-auto ms-auto">
+                <span class="badge bg-primary rounded-pill px-3 py-2">
+                    <i class="bi bi-calendar me-1"></i> 
+                    {% if selected_month and selected_year %}
+                        Showing: {{ selected_month }}/{{ selected_year }}
+                    {% elif selected_year %}
+                        Showing: Year {{ selected_year }}
+                    {% elif selected_month %}
+                        Showing: Month {{ selected_month }}
+                    {% else %}
+                        Showing: All Records
+                    {% endif %}
+                </span>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5" data-aos="fade-up">
+        <div class="col-md-4">
+            <div class="stat-card bg-white p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Total Services</span>
+                        <h2 class="fw-bold mb-0 mt-1" style="color: var(--navy-deep);">{{ total_services }}</h2>
+                    </div>
+                    <div class="bg-info bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-receipt fs-3 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-white p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Total Amount</span>
+                        <h2 class="fw-bold mb-0 mt-1 text-success">Rs {{ "{:,.2f}".format(total_amount) }}</h2>
+                    </div>
+                    <div class="bg-success bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-cash-stack fs-3 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-white p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Status</span>
+                        <div class="mt-1">
+                            {% if all_invoiced %}
+                                <span class="invoice-badge invoice-generated">
+                                    <i class="bi bi-check-circle me-1"></i> All Invoiced
+                                </span>
+                            {% else %}
+                                <span class="invoice-badge invoice-pending">
+                                    <i class="bi bi-hourglass me-1"></i> Pending
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="bg-secondary bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-check-circle fs-3 text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-table fs-5 text-primary"></i>
+                <h5 class="mb-0 fw-semibold">Service Entries</h5>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if services %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Date</th>
+                            <th>BU Unit</th>
+                            <th>Service Description</th>
+                            <th></th>
+                            <th class="text-end">Amount (Rs)</th>
+                            <th class="text-center pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in services %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-semibold">{{ service.submission_date.split(' ')[0] if service.submission_date else 'N/A' }}</div>
+                                <small class="text-muted">{{ service.submission_date.split(' ')[1] if service.submission_date else '' }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ service.bu_user.team_name if service.bu_user else 'N/A' }}</div>
+                                <small class="text-muted">{{ service.bu_user.full_name if service.bu_user else '' }}</small>
+                            </td>
+                            <td style="word-wrap: break-word; max-width: 300px;">
+                                <div class="fw-semibold">{{ service.description[:100] }}{% if service.description|length > 100 %}...{% endif %}</div>
+                                <small class="text-muted">{{ service.company_name }}</small>
+                                {% if service.description|length > 100 %}
+                                <small class="text-muted" title="{{ service.description }}">hover for full text</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                               
+                            </td>
+                            <td class="text-end fw-bold text-primary">Rs {{ "{:,.2f}".format(service.total_amount) }}</td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group btn-group-sm gap-1">
+                                    <button class="btn btn-outline-info rounded-pill" onclick="viewServiceDetails({{ service.id }})" title="View Details">
+                                        <i class="bi bi-eye me-1"></i> View Details
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                             <td class="pe-4"></td>
+                              <td class="pe-4"></td>
+                              <td class="pe-4"></td>
+                              
+                            <td colspan="" class="ps-4 fw-bold">Total:</td>
+                            <td class="text-end fw-bold text-primary pe-4">Rs {{ "{:,.2f}".format(total_amount) }}</td>
+                            <td class="pe-4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="mt-3 mb-0 text-muted">No services found for the selected period</p>
+                <small class="text-muted">Try changing the month/year filter or check back later</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Service Details Modal -->
+<div class="modal fade" id="serviceDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95%; width: 1300px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header-custom text-white border-0">
+                <h5 class="modal-title fw-semibold"><i class="bi bi-file-text me-2"></i> Service Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="serviceDetailsBody" style="max-height: 70vh; overflow-y: auto;">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Loading service details...</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary rounded-pill px-4" onclick="viewWorkflowFromModal()">
+                    <i class="bi bi-clock-history me-2"></i> View Workflow
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// ============================================================
+// GLOBAL MAP — stores full description text by key
+// ============================================================
+window._resDescMap = {};
+
+let currentServiceId = null;
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatCurrency(amount) {
+    return 'Rs ' + parseFloat(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function viewWorkflow(serviceId) {
+    window.location.href = `/api/workflow/view/${serviceId}`;
+}
+
+function viewWorkflowFromModal() {
+    if (currentServiceId) {
+        window.location.href = `/api/workflow/view/${currentServiceId}`;
+    }
+}
+
+// ============================================================
+// DESCRIPTION POPUP — reads full text from JS map
+// ============================================================
+function showDescriptionPopup(resKey) {
+    const entry = window._resDescMap[resKey];
+    if (!entry) return;
+
+    Swal.fire({
+        title: '<i class="bi bi-file-text me-2"></i> ' + escapeHtml(entry.name),
+        html: `<div style="text-align: left; max-height: 400px; overflow-y: auto;">
+                    <strong>Description:</strong><br>
+                    <div class="mt-2 p-3 bg-light rounded" style="word-break: break-word; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                        ${escapeHtml(entry.description)}
+                    </div>
+               </div>`,
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#1E3A5F',
+        width: '600px'
+    });
+}
+
+async function viewServiceDetails(serviceId) {
+    currentServiceId = serviceId;
+    const modalBody = document.getElementById('serviceDetailsBody');
+    modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p>Loading service details...</p></div>';
+    const modal = new bootstrap.Modal(document.getElementById('serviceDetailsModal'));
+    modal.show();
+    
+    try {
+        const response = await fetch(`/api/service-items/${serviceId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const item = result.service_item;
+            let resourcesHtml = '';
+            let totalLoitChargeback = 0;
+            let totalLoitShowback = 0;
+            let totalLolcShowback = 0;
+            
+            // Build resources table HTML
+            if (item.resources && item.resources.length > 0) {
+                resourcesHtml = `
+                    <div class="mt-4">
+                        <h6 class="fw-semibold"><i class="bi bi-box-seam me-2 text-primary"></i>Resource Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered" style="min-width: 1000px; width: 100%;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 15%;">Resource</th>
+                                        <th style="width: 25%;">Description</th>
+                                        <th style="width: 8%;" class="text-center">Quantity</th>
+                                        <th style="width: 12%;" class="text-end">LOIT CB Amount (Rs)</th>
+                                        <th style="width: 12%;" class="text-end">LOIT SB Amount (Rs)</th>
+                                        <th style="width: 12%;" class="text-end">{{ company.showback_label_short }} Rate (Rs)</th>
+                                        <th style="width: 12%;" class="text-end">{{ company.showback_label_short }} Amount (Rs)</th>
+                                        <th style="width: 10%;" class="text-end">Total (Rs)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                let resourceIndex = 0;
+                
+                for (const r of item.resources) {
+                    const qty = r.quantity || r.hours || 0;
+                    const uom = r.uom || 'units';
+                    
+                    const loitChargebackRate = r.loit_chargeback_rate || r.chargeback_rate || 0;
+                    const loitShowbackRate = r.loit_showback_rate || 0;
+                    const lolcShowbackRate = r.lolc_showback_rate || r.showback_rate || 0;
+                    
+                    const loitChargebackAmount = qty * loitChargebackRate;
+                    const loitShowbackAmount = qty * loitShowbackRate;
+                    const lolcShowbackAmount = qty * lolcShowbackRate;
+                    const totalAmount = loitChargebackAmount + loitShowbackAmount + lolcShowbackAmount;
+                    
+                    totalLoitChargeback += loitChargebackAmount;
+                    totalLoitShowback += loitShowbackAmount;
+                    totalLolcShowback += lolcShowbackAmount;
+                    
+                    const resourceName = r.name || '';
+                    const descriptionText = r.description || item.description || '';
+                    
+                    // Store full description in JS map
+                    const resKey = `res_${serviceId}_${resourceIndex}`;
+                    window._resDescMap[resKey] = {
+                        name: resourceName,
+                        description: descriptionText
+                    };
+                    resourceIndex++;
+                    
+                    const shortDescription = descriptionText.length > 50 
+                        ? descriptionText.substring(0, 47) + '...' 
+                        : descriptionText;
+                    
+                    const shortName = resourceName.length > 25 
+                        ? resourceName.substring(0, 22) + '...' 
+                        : resourceName;
+                    
+                    resourcesHtml += `
+                        <tr>
+                            <td style="word-break: break-word; white-space: normal;">
+                                <strong title="${escapeHtml(resourceName)}">${escapeHtml(shortName)}</strong>
+                            </td>
+                            <td class="desc-cell" 
+                                title="Click to view full description" 
+                                onclick="showDescriptionPopup('${resKey}')"
+                                style="cursor: pointer; word-break: break-word; white-space: normal;">
+                                <i class="bi bi-file-text me-1 text-info"></i>${escapeHtml(shortDescription)}
+                                ${descriptionText.length > 50 ? '<span class="text-primary small ms-1"><i class="bi bi-eye"></i> click</span>' : ''}
+                            </td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <span class="quantity-badge">${qty} ${escapeHtml(uom)}</span>
+                            </td>
+                            <td class="text-end amount-cb" style="white-space: nowrap;">${formatCurrency(loitChargebackAmount)}</td>
+                            <td class="text-end amount-sb" style="white-space: nowrap;">${formatCurrency(loitShowbackAmount)}</td>
+                            <td class="text-end" style="white-space: nowrap;">${formatCurrency(lolcShowbackRate)}</td>
+                            <td class="text-end amount-lolc" style="white-space: nowrap;">${formatCurrency(lolcShowbackAmount)}</td>
+                            <td class="text-end fw-bold text-primary" style="white-space: nowrap;">${formatCurrency(totalAmount)}</td>
+                        </tr>
+                    `;
+                }
+                
+                resourcesHtml += `
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Resource Totals:</td>
+                                        <td class="text-end fw-bold amount-cb">${formatCurrency(totalLoitChargeback)}</td>
+                                        <td class="text-end fw-bold amount-sb">${formatCurrency(totalLoitShowback)}</td>
+                                        <td></td>
+                                        <td class="text-end fw-bold amount-lolc">${formatCurrency(totalLolcShowback)}</td>
+                                        <td class="text-end fw-bold text-primary">${formatCurrency(totalLoitChargeback + totalLoitShowback + totalLolcShowback)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resourcesHtml = '<div class="alert alert-info rounded-3 mt-3">No resources recorded for this service.</div>';
+            }
+            
+            // Get totals from API response
+            const loitChargebackTotal = item.loit_chargeback_total || totalLoitChargeback || item.chargeback_total || 0;
+            const loitShowbackTotal = item.loit_showback_total || totalLoitShowback || 0;
+            const lolcShowbackTotal = item.lolc_showback_total || totalLolcShowback || item.showback_total || 0;
+            const loitTotal = loitChargebackTotal + loitShowbackTotal;
+            const grandTotal = loitTotal + lolcShowbackTotal;
+            
+            // Build the complete modal HTML - COMMENTS REMOVED
+            const modalHtml = `
+                <style>
+                    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+                    .info-item { background: #F8FAFE; border-radius: 12px; padding: 0.75rem 1rem; border-left: 3px solid #2C7DA0; }
+                    .info-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #64748B; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 5px; }
+                    .info-value { font-size: 0.95rem; font-weight: 600; color: #1E293B; }
+                    .amount-cb { color: #059669; font-weight: 600; }
+                    .amount-sb { color: #D97706; font-weight: 600; }
+                    .amount-lolc { color: #7C3AED; font-weight: 600; }
+                    .quantity-badge {
+                        display: inline-block;
+                        background: #E2E8F0;
+                        padding: 4px 10px;
+                        border-radius: 20px;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                        white-space: nowrap;
+                    }
+                    .desc-cell {
+                        cursor: pointer;
+                        transition: background-color 0.2s ease;
+                        word-break: break-word;
+                        white-space: normal;
+                    }
+                    .desc-cell:hover {
+                        background-color: #e8f0fe;
+                    }
+                </style>
+                
+                <!-- Service Information -->
+                <div class="card border-0 shadow-sm rounded-3 mb-3">
+                    <div class="card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-calendar"></i> Submission Date</div>
+                                <div class="info-value">${item.submission_date || 'N/A'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-building"></i> Company</div>
+                                <div class="info-value fw-semibold">${escapeHtml(item.company_name)}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-person-badge"></i> BU User</div>
+                                <div class="info-value">
+                                    ${escapeHtml(item.bu_user?.full_name || 'Unknown')}
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-diagram-3"></i> Unit / Team</div>
+                                <div class="info-value">${escapeHtml(item.bu_user?.team_name || 'N/A')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-check-circle"></i> Status</div>
+                                <div class="info-value">
+                                    <span class="status-badge status-${item.head_approval_status === 'approved' ? 'approved' : (item.head_approval_status === 'rejected' ? 'rejected' : 'pending')}">
+                                        ${item.head_approval_status === 'approved' ? 'Approved' : (item.head_approval_status === 'rejected' ? 'Rejected' : 'Pending')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                      
+                    </div>
+                </div>
+                
+                ${resourcesHtml}
+                
+                <!-- Financial Summary Cards -->
+                <div class="row mt-4 g-3">
+                    <div class="col-md-4">
+                        <div class="summary-card-modal card-loit-total">
+                            <small><i class="bi bi-cash-stack me-1"></i> LOIT Total Amount</small>
+                            <h4 class="mt-2 mb-0">${formatCurrency(loitTotal)}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-card-modal card-lolc-showback">
+                            <small><i class="bi bi-building me-1"></i> {{ company.showback_label }}</small>
+                            <h4 class="mt-2 mb-0">${formatCurrency(lolcShowbackTotal)}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-card-modal card-grand-total">
+                            <small><i class="bi bi-receipt me-1"></i> Grand Total</small>
+                            <h4 class="mt-2 mb-0">${formatCurrency(grandTotal)}</h4>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modalBody.innerHTML = modalHtml;
+            
+            if (typeof convertUTCToLocal === 'function') convertUTCToLocal();
+            
+        } else {
+            modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details: ' + escapeHtml(result.error || 'Unknown error') + '</div>';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details. Please try again.</div>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

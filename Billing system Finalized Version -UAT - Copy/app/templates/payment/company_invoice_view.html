@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice - {{ company.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --bg-active: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-mid) 100%);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .invoice-header {
+        background: var(--bg-active);
+        border-radius: 20px;
+        padding: 1.5rem;
+        color: white;
+        margin-bottom: 1.5rem;
+    }
+    
+    .summary-card {
+        border-radius: 16px;
+        padding: 1rem;
+        height: 100%;
+        transition: transform 0.2s;
+    }
+    .summary-card:hover {
+        transform: translateY(-3px);
+    }
+    .card-total-service { 
+        background: linear-gradient(135deg, #059669 0%, #10B981 100%); 
+        color: white; 
+    }
+    .card-showback { 
+        background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); 
+        color: white; 
+    }
+    .card-grand-total { 
+        background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%); 
+        color: white; 
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+    
+    .btn-export {
+        background: var(--bg-active);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 10px 24px;
+        color: white;
+        transition: all 0.2s;
+    }
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(30, 58, 95, 0.3);
+        color: white;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="invoice-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h1 class="display-6 fw-bold mb-0">Invoice</h1>
+                <p class="opacity-75 mt-1 mb-0">
+                    <i class="bi bi-building me-1"></i> {{ company.name }}
+                    <span class="ms-3"><i class="bi bi-calendar me-1"></i> {{ period }}</span>
+                </p>
+            </div>
+            <div class="mt-2 mt-md-0">
+                <a href="{{ url_for('payment.export_company_invoice_pdf', company_id=company.id) }}?month={{ selected_month }}&year={{ selected_year }}" 
+                   class="btn btn-export shadow-sm">
+                    <i class="bi bi-file-pdf me-2"></i> Download PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label class="form-label fw-semibold mb-1">Month</label>
+                <select name="month" class="form-select" style="width: 120px;">
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-semibold mb-1">Year</label>
+                <select name="year" class="form-select" style="width: 110px;">
+                    {% for y in range(2020, 2031) %}
+                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('payment.company_invoice', company_id=company.id) }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-repeat me-1"></i> Current Month
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="summary-card card-total-service">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="opacity-75">LOIT Total Chargeback</small>
+                        <h3 class="fw-bold mb-0">Rs {{ "{:,.2f}".format(total_loit|default(0)) }}</h3>
+                        
+                    </div>
+                    <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card card-showback">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="opacity-75">{{ company.showback_label }}</small>
+                        <h3 class="fw-bold mb-0">Rs {{ "{:,.2f}".format(total_lolc_showback|default(0)) }}</h3>
+                       
+                    </div>
+                    <i class="bi bi-building fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card card-grand-total">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="opacity-75">Total Cost</small>
+                        <h3 class="fw-bold mb-0">Rs {{ "{:,.2f}".format(grand_total|default(0)) }}</h3>
+                       
+                    </div>
+                    <i class="bi bi-receipt fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold mb-0">
+                    <i class="bi bi-list-ul me-2 text-primary"></i> Service Details
+                </h5>
+                <span class="badge bg-secondary rounded-pill">{{ services|length }} services</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Service Date</th>
+                            <th>Unit</th>
+                            <th>BU User</th>
+                            <th>Description</th>
+                            <th class="text-end">LOIT Total (Rs)</th>
+                            <th class="text-end">{{ company.showback_label }} (Rs)</th>
+                            <th class="text-end pe-4">Total (Rs)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in services %}
+                        <tr>
+                            <td class="ps-4 text-nowrap">{{ service.service_date.strftime('%Y-%m-%d') if service.service_date else 'N/A' }}</td>
+                            <td class="text-nowrap">{{ service.unit_name }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ service.bu_user_name }}</div>
+                                <small class="text-muted">{{ service.employee_id }}</small>
+                            </td>
+                            <td style="max-width: 250px;">{{ service.description[:80] }}{% if service.description|length > 80 %}...{% endif %}</td>
+                            <td class="text-end text-success fw-semibold">Rs {{ "{:,.2f}".format(service.loit_total) }}</td>
+                            <td class="text-end text-warning fw-semibold">Rs {{ "{:,.2f}".format(service.lolc_showback) }}</td>
+                            <td class="text-end fw-bold text-dark pe-4">Rs {{ "{:,.2f}".format(service.total) }}</td>
+                         </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-2">No services found for {{ period }}</p>
+                                <small>Services will appear here once approved by Finance Controller</small>
+                            </td>
+                         </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="3" class="ps-4 fw-bold"></td>
+                            <td class="ps-4 fw-bold">TOTAL:</td>
+                            <td class="text-end fw-bold text-success">Rs {{ "{:,.2f}".format(total_loit|default(0)) }}</td>
+                            <td class="text-end fw-bold text-warning">Rs {{ "{:,.2f}".format(total_lolc_showback|default(0)) }}</td>
+                            <td class="text-end fw-bold text-dark pe-4">Rs {{ "{:,.2f}".format(grand_total|default(0)) }}</td>
+                         </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            Swal.fire({
+                icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" }}',
+                title: '{{ category|title }}',
+                text: {{ message|tojson }},
+                confirmButtonColor: '#1E3A5F'
+            });
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+</script>
+{% endblock %}

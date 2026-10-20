@@ -1,0 +1,532 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Companies - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert.alert-dismissible, .alert.alert-success, .alert.alert-danger, .alert-info {
+        display: none !important;
+    }
+    
+    .company-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .company-card:hover {
+        transform: translateY(-6px);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 24px;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    }
+    
+    /* Navy Blue Theme */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0A2540 0%, #1E3A5F 100%) !important;
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(135deg, #2C3E50 0%, #1A252F 100%) !important;
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #D97706 0%, #EA8C2B 100%) !important;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #0A2540 0%, #1E3A5F 100%);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1E3A5F 0%, #0A2540 100%);
+        transform: translateY(-2px);
+    }
+    
+    .btn-outline-primary {
+        border-color: #1E3A5F;
+        color: #1E3A5F;
+    }
+    
+    .btn-outline-primary:hover {
+        background: #1E3A5F;
+        border-color: #1E3A5F;
+    }
+    
+    .btn-outline-warning {
+        border-color: #D97706;
+        color: #D97706;
+    }
+    
+    .btn-outline-warning:hover {
+        background: #D97706;
+        border-color: #D97706;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #1E3A5F;
+        box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+    }
+    
+    .modal-header {
+        border-bottom: none;
+    }
+    
+    .company-stats {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="info-icon">
+                    <i class="bi bi-building fs-4 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: #0A2540;">Manage Companies</h1>
+                    
+                </div>
+            </div>
+        </div>
+        <!-- Add this next to the "Create New Company" button -->
+<div class="mt-3 mt-sm-0" data-aos="fade-left">
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.bulk_create_companies') }}" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="bi bi-building-fill me-2"></i> Bulk Create
+        </a>
+        <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#createCompanyModal">
+            <i class="bi bi-plus-circle-fill me-2"></i> Create New Company
+        </button>
+    </div>
+</div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="row g-3 mb-4" data-aos="fade-up">
+        <div class="col-md-4">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Total Companies</span>
+                    <h3 class="fw-bold mb-0">{{ companies|length }}</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-building fs-4 text-primary"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Active Companies</span>
+                    <h3 class="fw-bold mb-0">{{ companies|selectattr('is_active')|list|length }}</h3>
+                </div>
+                <div class="bg-success bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-check-circle-fill fs-4 text-success"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Inactive Companies</span>
+                    <h3 class="fw-bold mb-0">{{ companies|rejectattr('is_active')|list|length }}</h3>
+                </div>
+                <div class="bg-secondary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-pause-circle-fill fs-4 text-secondary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section p-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i> Search</label>
+                <input type="text" id="searchInput" class="form-control rounded-pill" placeholder="Company name or code...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-funnel me-1"></i> Status</label>
+                <select id="statusFilter" class="form-select rounded-pill">
+                    <option value="">All Companies</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-secondary rounded-pill w-100" onclick="clearFilters()">
+                    <i class="bi bi-eraser me-1"></i> Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Companies Grid -->
+    <div class="row g-4" id="companiesGrid" data-aos="fade-up" data-aos-delay="200">
+        {% for company in companies %}
+        <div class="col-md-6 col-lg-4 company-card" 
+             data-name="{{ company.name|lower }}" 
+             data-code="{{ company.code|lower }}" 
+             data-status="{% if company.is_active %}active{% else %}inactive{% endif %}">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header {% if company.is_active %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} text-white border-0 py-3 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-building fs-5"></i>
+                            <strong class="fs-6">{{ company.name }}</strong>
+                        </div>
+                        {% if company.code %}
+                        <span class="badge bg-white text-dark rounded-pill px-3 py-1">
+                            <i class="bi bi-tag me-1"></i> {{ company.code }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% if company.email %}
+                    <div class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-envelope me-2 text-muted" style="width: 20px;"></i>
+                        <span class="small">{{ company.email }}</span>
+                    </div>
+                    {% endif %}
+                    {% if company.phone %}
+                    <div class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-telephone me-2 text-muted" style="width: 20px;"></i>
+                        <span class="small">{{ company.phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if company.address %}
+                    <div class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-geo-alt me-2 text-muted mt-1" style="width: 20px;"></i>
+                        <span class="small">{{ company.address|truncate(80) }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="company-stats mt-3 pt-2 border-top">
+                        <small><i class="bi bi-calendar3 me-1"></i> Created: {{ company.created_at.strftime('%d %b %Y') }}</small>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 p-4 pt-0">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill flex-fill" onclick="editCompany({{ company.id }})">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-sm rounded-pill flex-fill {% if company.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                                onclick="confirmToggle({{ company.id }}, '{{ company.name }}', {{ 'true' if company.is_active else 'false' }})">
+                            {% if company.is_active %}
+                                <i class="bi bi-pause-circle me-1"></i> Deactivate
+                            {% else %}
+                                <i class="bi bi-play-circle me-1"></i> Activate
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="modern-card text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <h5 class="mt-3">No Companies Found</h5>
+                <p class="text-muted">Create your first company to get started</p>
+                <button class="btn btn-primary rounded-pill mt-2" data-bs-toggle="modal" data-bs-target="#createCompanyModal">
+                    <i class="bi bi-plus-circle me-2"></i> Create Company
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Create Company Modal -->
+<div class="modal fade" id="createCompanyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-gradient-primary text-white border-0 p-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-building-add me-2"></i>Create New Company</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.create_company') }}" id="createCompanyForm" novalidate>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" id="name" name="name" required autocomplete="off" placeholder="e.g., LOLC Technologies">
+                        <div class="invalid-feedback">Company name is required</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="company_type" class="form-label fw-semibold">Company Type</label>
+                        <select class="form-select rounded-3" id="company_type" name="company_type">
+                            <option value="external" selected>Other</option>
+                            <option value="parent">Parent</option>
+                        </select>
+                        <small class="text-muted">Parent payment users can access all companies. Other payment users can access only their assigned company.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="code" class="form-label fw-semibold">Company Code</label>
+                        <input type="text" class="form-control rounded-3 bg-light" id="code" name="code" readonly style="background-color: #f8f9fa;">
+                        <small class="text-muted">Auto-generated from company name</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Email Address</label>
+                        <input type="email" class="form-control rounded-3" id="email" name="email" placeholder="company@example.com">
+                        <div class="invalid-feedback">Please enter a valid email address</div>
+                        <small class="text-muted">Company email address (optional)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                        <input type="tel" class="form-control rounded-3" id="phone" name="phone" pattern="[0-9]{10}" maxlength="10" placeholder="0771234567">
+                        <div class="invalid-feedback">Phone number must be exactly 10 digits</div>
+                        <small class="text-muted">10-digit phone number (e.g., 0771234567)</small>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <label for="address" class="form-label fw-semibold">Address</label>
+                        <textarea class="form-control rounded-3" id="address" name="address" rows="2" placeholder="Company address..."></textarea>
+                        <small class="text-muted">Company address (optional)</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light p-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-save me-1"></i> Create Company
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Company Modal -->
+<div class="modal fade" id="editCompanyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-gradient-warning text-white border-0 p-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Company</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editCompanyForm" novalidate>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" id="edit_name" name="name" required>
+                        <div class="invalid-feedback">Company name is required</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_company_type" class="form-label fw-semibold">Company Type</label>
+                        <select class="form-select rounded-3" id="edit_company_type" name="company_type">
+                            <option value="external">Other</option>
+                            <option value="parent">Parent</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_code" class="form-label fw-semibold">Company Code</label>
+                        <input type="text" class="form-control rounded-3" id="edit_code" name="code" pattern="[A-Z0-9\-]+" 
+                               title="Only uppercase letters, numbers, and hyphens allowed">
+                        <small class="text-muted">Optional unique identifier</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_email" class="form-label fw-semibold">Email Address</label>
+                        <input type="email" class="form-control rounded-3" id="edit_email" name="email" placeholder="company@example.com">
+                        <div class="invalid-feedback">Please enter a valid email address</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_phone" class="form-label fw-semibold">Phone Number</label>
+                        <input type="tel" class="form-control rounded-3" id="edit_phone" name="phone" pattern="[0-9]{10}" maxlength="10" placeholder="0771234567">
+                        <div class="invalid-feedback">Phone number must be exactly 10 digits</div>
+                    </div>
+                    <div class="mb-0">
+                        <label for="edit_address" class="form-label fw-semibold">Address</label>
+                        <textarea class="form-control rounded-3" id="edit_address" name="address" rows="2" placeholder="Company address..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light p-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4">
+                        <i class="bi bi-save me-1"></i> Update Company
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toggle Forms (Hidden) -->
+{% for company in companies %}
+<form id="toggle-form-{{ company.id }}" method="POST" action="{{ url_for('admin.toggle_company', company_id=company.id) }}" style="display: none;"></form>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// Auto-generate company code from name
+function generateCodeFromName(name) {
+    if (!name) return '';
+    let code = name.toLowerCase();
+    code = code.replace(/[\s-]+/g, '_');
+    code = code.replace(/[^a-z0-9_]/g, '');
+    code = code.substring(0, 30);
+    return code;
+}
+
+// Watch company name input
+const nameInput = document.getElementById('name');
+if (nameInput) {
+    nameInput.addEventListener('input', function() {
+        const codeField = document.getElementById('code');
+        if (codeField) {
+            codeField.value = generateCodeFromName(this.value);
+        }
+    });
+}
+
+// Filter functions
+function filterCompanies() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const cards = document.querySelectorAll('.company-card');
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        const code = card.getAttribute('data-code') || '';
+        const cardStatus = card.getAttribute('data-status');
+        let show = true;
+        if (searchTerm && !name.includes(searchTerm) && !code.includes(searchTerm)) show = false;
+        if (status && cardStatus !== status) show = false;
+        card.style.display = show ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    filterCompanies();
+}
+
+// Confirm toggle
+function confirmToggle(companyId, name, isActive) {
+    const action = isActive ? 'deactivate' : 'activate';
+    Swal.fire({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Company?`,
+        text: `Are you sure you want to ${action} "${name}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: isActive ? '#D97706' : '#1E3A5F',
+        confirmButtonText: `Yes, ${action} it!`
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(`toggle-form-${companyId}`).submit();
+        }
+    });
+}
+
+// Edit company
+window.editCompany = function(companyId) {
+    Swal.fire({ title: 'Loading...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    fetch(`/api/companies/${companyId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        document.getElementById('edit_name').value = data.name || '';
+        document.getElementById('edit_code').value = data.code || '';
+        document.getElementById('edit_email').value = data.email || '';
+        document.getElementById('edit_phone').value = data.phone || '';
+        document.getElementById('edit_address').value = data.address || '';
+        document.getElementById('edit_company_type').value = data.company_type || 'external';
+        document.getElementById('editCompanyForm').action = `/admin/companies/${companyId}/edit`;
+        new bootstrap.Modal(document.getElementById('editCompanyModal')).show();
+    })
+    .catch(error => {
+        Swal.close();
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load company data' });
+    });
+};
+
+// Validation helpers
+function validatePhoneNumber(phone) { if (!phone) return true; return /^[0-9]{10}$/.test(phone); }
+function validateEmail(email) { if (!email) return true; return /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/.test(email); }
+
+function validateCreateForm() {
+    let isValid = true;
+    const name = document.getElementById('name');
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    name.classList.remove('is-invalid');
+    email.classList.remove('is-invalid');
+    phone.classList.remove('is-invalid');
+    if (!name.value.trim()) { name.classList.add('is-invalid'); isValid = false; }
+    if (email.value.trim() && !validateEmail(email.value)) { email.classList.add('is-invalid'); isValid = false; }
+    if (phone.value.trim() && !validatePhoneNumber(phone.value)) { phone.classList.add('is-invalid'); isValid = false; }
+    if (!isValid) Swal.fire({ icon: 'warning', title: 'Validation Error', text: 'Please fix the highlighted fields.' });
+    return isValid;
+}
+
+function validateEditForm() {
+    let isValid = true;
+    const name = document.getElementById('edit_name');
+    const email = document.getElementById('edit_email');
+    const phone = document.getElementById('edit_phone');
+    name.classList.remove('is-invalid');
+    email.classList.remove('is-invalid');
+    phone.classList.remove('is-invalid');
+    if (!name.value.trim()) { name.classList.add('is-invalid'); isValid = false; }
+    if (email.value.trim() && !validateEmail(email.value)) { email.classList.add('is-invalid'); isValid = false; }
+    if (phone.value.trim() && !validatePhoneNumber(phone.value)) { phone.classList.add('is-invalid'); isValid = false; }
+    if (!isValid) Swal.fire({ icon: 'warning', title: 'Validation Error', text: 'Please fix the highlighted fields.' });
+    return isValid;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchInput')?.addEventListener('keyup', filterCompanies);
+    document.getElementById('statusFilter')?.addEventListener('change', filterCompanies);
+    document.getElementById('createCompanyForm')?.addEventListener('submit', function(e) { if (!validateCreateForm()) e.preventDefault(); });
+    document.getElementById('editCompanyForm')?.addEventListener('submit', function(e) { if (!validateEditForm()) e.preventDefault(); });
+    
+    // Flash messages
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

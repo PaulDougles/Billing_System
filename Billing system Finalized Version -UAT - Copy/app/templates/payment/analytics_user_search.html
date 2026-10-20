@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}User Search - Analytics{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet">
+<style>
+    .search-card {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .user-result-card {
+        background: #F8FAFE;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        border: 1px solid #E2E8F0;
+    }
+    .role-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .role-bu { background: #DBEAFE; color: #1E40AF; }
+    .role-supervisor { background: #D1FAE5; color: #065F46; }
+    .role-head { background: #FEF3C7; color: #92400E; }
+    .role-finance { background: #E0E7FF; color: #3730A3; }
+    .role-admin { background: #FEE2E2; color: #991B1B; }
+    .role-payment { background: #FCE7F3; color: #9D174D; }
+    
+    .stat-card-small {
+        background: white;
+        border-radius: 16px;
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid #E2E8F0;
+        height: 100%;
+    }
+    .data-table {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    .data-table th {
+        background: #F8FAFE;
+        padding: 0.75rem;
+        font-weight: 600;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    .data-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #E2E8F0;
+        vertical-align: middle;
+    }
+    .data-table tr:hover td {
+        background: #F8FAFE;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-approved { background: #D1FAE5; color: #065F46; }
+    .status-pending { background: #FEF3C7; color: #92400E; }
+    .status-rejected { background: #FEE2E2; color: #991B1B; }
+    .status-invoiced { background: #DBEAFE; color: #1E40AF; }
+    .amount-cb { color: #059669; font-weight: 600; }
+    .amount-sb { color: #D97706; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-6 fw-bold mb-0" style="color: #0A2540;">User Search</h1>
+            <p class="text-muted">Search any user by name, email, or employee ID</p>
+        </div>
+        <div>
+            <a href="{{ url_for('payment.analytics_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Card -->
+    <div class="search-card">
+        <div class="row g-3">
+            <div class="col-md-7">
+                <label class="form-label fw-semibold">Search User</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Name, email, or employee ID..." 
+                           onkeypress="if(event.which===13) searchUser()">
+                </div>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Date Range</label>
+                <input type="text" id="dateRangePicker" class="form-control" placeholder="Select date range">
+            </div>
+        </div>
+        <div class="mt-3">
+            <button class="btn btn-primary rounded-pill px-4" onclick="searchUser()">
+                <i class="bi bi-search me-2"></i> Search
+            </button>
+            <button class="btn btn-outline-secondary rounded-pill px-4 ms-2" onclick="clearSearch()">
+                <i class="bi bi-eraser me-2"></i> Clear
+            </button>
+        </div>
+    </div>
+
+    <!-- Results Container -->
+    <div id="searchResult">
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-person-search fs-1"></i>
+            <p class="mt-3">Enter a name, email, or employee ID to search</p>
+        </div>
+    </div>
+</div>
+
+<!-- IMPORTANT: jQuery must be loaded FIRST -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// ============ HELPER FUNCTIONS ============
+function formatCurrency(amount) {
+    if (amount === undefined || amount === null || isNaN(amount)) return 'Rs 0.00';
+    return 'Rs ' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getRoleClass(role) {
+    const classes = {
+        'bu_user': 'role-bu',
+        'supervisor': 'role-supervisor',
+        'head_of_it': 'role-head',
+        'finance_controller': 'role-finance',
+        'admin': 'role-admin',
+        'payment_lolc_technologies': 'role-payment',
+        'payment_lolc_finance': 'role-payment',
+        'payment_company_user': 'role-payment'
+    };
+    return classes[role] || 'role-bu';
+}
+
+function getRoleIcon(role) {
+    const icons = {
+        'bu_user': 'bi-person-workspace',
+        'supervisor': 'bi-person-check',
+        'head_of_it': 'bi-shield-check',
+        'finance_controller': 'bi-calculator',
+        'admin': 'bi-shield-lock',
+        'payment_lolc_technologies': 'bi-cash-stack',
+        'payment_lolc_finance': 'bi-cash-stack',
+        'payment_company_user': 'bi-building'
+    };
+    return icons[role] || 'bi-person';
+}
+
+function formatRoleName(role) {
+    const names = {
+        'bu_user': 'BU User',
+        'supervisor': 'Supervisor',
+        'head_of_it': 'Head of IT',
+        'finance_controller': 'Finance Controller',
+        'admin': 'Admin',
+        'payment_lolc_technologies': 'Payment (LOLC Tech)',
+        'payment_lolc_finance': 'Payment (LOLC Finance)',
+        'payment_company_user': 'Payment (Company)',
+        'record_assistant': 'Record Assistant'
+    };
+    return names[role] || (role || 'User').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+// ============ DATE RANGE ============
+let dateRange = { start: moment().startOf('month').format('YYYY-MM-DD'), end: moment().endOf('month').format('YYYY-MM-DD') };
+
+$(document).ready(function() {
+    // Initialize date range picker
+    $('#dateRangePicker').daterangepicker({
+        startDate: moment().startOf('month'),
+        endDate: moment().endOf('month'),
+        locale: { format: 'YYYY-MM-DD' },
+        autoUpdateInput: true,
+        ranges: {
+            'Today': [moment(), moment()],
+            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            'This Quarter': [moment().startOf('quarter'), moment().endOf('quarter')],
+            'This Year': [moment().startOf('year'), moment().endOf('year')]
+        }
+    }).on('apply.daterangepicker', function(ev, picker) {
+        dateRange.start = picker.startDate.format('YYYY-MM-DD');
+        dateRange.end = picker.endDate.format('YYYY-MM-DD');
+        $(this).val(picker.startDate.format('YYYY-MM-DD') + ' to ' + picker.endDate.format('YYYY-MM-DD'));
+    });
+    
+    // Set initial value
+    $('#dateRangePicker').val(moment().startOf('month').format('YYYY-MM-DD') + ' to ' + moment().endOf('month').format('YYYY-MM-DD'));
+});
+
+// ============ SEARCH FUNCTION ============
+async function searchUser() {
+    const searchTerm = document.getElementById('searchInput').value.trim();
+    if (!searchTerm) {
+        Swal.fire({ icon: 'warning', title: 'Warning', text: 'Please enter a search term', confirmButtonColor: '#1E3A5F' });
+        return;
+    }
+    
+    Swal.fire({ title: 'Searching...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    
+    try {
+        const url = `/api/payment/analytics/user-search?search=${encodeURIComponent(searchTerm)}&date_from=${dateRange.start}&date_to=${dateRange.end}`;
+        const response = await fetch(url);
+        
+        if (response.status === 404) {
+            Swal.close();
+            document.getElementById('searchResult').innerHTML = `<div class="alert alert-warning">User not found</div>`;
+            return;
+        }
+        
+        const result = await response.json();
+        Swal.close();
+        
+        if (result.success && result.user) {
+            displayUserResult(result.user, result.user_data);
+        } else {
+            document.getElementById('searchResult').innerHTML = `<div class="alert alert-warning">${result.error || 'User not found'}</div>`;
+        }
+    } catch (error) {
+        Swal.close();
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message, confirmButtonColor: '#DC2626' });
+    }
+}
+
+// ============ DISPLAY RESULT ============
+function displayUserResult(user, data) {
+    const roleClass = getRoleClass(user.role);
+    const roleIcon = getRoleIcon(user.role);
+    const roleName = formatRoleName(user.role);
+    
+    let statsHtml = '';
+    if (user.role === 'bu_user') {
+        statsHtml = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-3"><div class="stat-card-small"><small>Total Services</small><h5>${data.total_services || 0}</h5></div></div>
+                <div class="col-md-3"><div class="stat-card-small"><small>Pending</small><h5 class="text-warning">${data.pending_count || 0}</h5></div></div>
+                <div class="col-md-3"><div class="stat-card-small"><small>Approved</small><h5 class="text-success">${data.approved_count || 0}</h5></div></div>
+                <div class="col-md-3"><div class="stat-card-small"><small>Total Amount</small><h5 class="text-primary">${formatCurrency(data.total_amount)}</h5></div></div>
+            </div>
+        `;
+    } else if (user.role === 'supervisor') {
+        statsHtml = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-3"><div class="stat-card-small"><small>Team Members</small><h5>${data.team_members || 0}</h5></div></div>
+                <div class="col-md-3"><div class="stat-card-small"><small>Pending Reviews</small><h5 class="text-warning">${data.pending_reviews || 0}</h5></div></div>
+                <div class="col-md-3"><div class="stat-card-small"><small>Approved</small><h5 class="text-success">${data.approved_count || 0}</h5></div></div>
+                <div class="col-md-3"><div class="stat-card-small"><small>Rejected</small><h5 class="text-danger">${data.rejected_count || 0}</h5></div></div>
+            </div>
+        `;
+    } else {
+        statsHtml = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="stat-card-small"><small>Total Services</small><h5>${data.total_services || 0}</h5></div></div>
+                <div class="col-md-4"><div class="stat-card-small"><small>Total Amount</small><h5 class="text-primary">${formatCurrency(data.total_amount)}</h5></div></div>
+                <div class="col-md-4"><div class="stat-card-small"><small>Invoiced</small><h5 class="text-info">${data.invoiced_count || 0}</h5></div></div>
+            </div>
+        `;
+    }
+    
+    let recordsHtml = '';
+    if (data.records && data.records.length > 0) {
+        data.records.slice(0, 10).forEach(r => {
+            let statusClass = 'status-pending';
+            let statusText = r.status || 'Pending';
+            if (statusText === 'Invoiced') statusClass = 'status-invoiced';
+            else if (statusText === 'Approved') statusClass = 'status-approved';
+            else if (statusText === 'Rejected') statusClass = 'status-rejected';
+            
+            recordsHtml += `
+                <tr>
+                    <td class="text-nowrap">${r.date || '-'}</td>
+                    <td>${escapeHtml(r.company_name)}</div>
+                    <td style="max-width: 250px;">${escapeHtml(r.description)}</div>
+                    <td class="text-end amount-cb">${formatCurrency(r.loit_cb)}</div>
+                    <td class="text-end amount-sb">${formatCurrency(r.loit_sb)}</div>
+                    <td class="text-end fw-bold text-primary">${formatCurrency(r.total)}</div>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></div>
+                 </div>
+            `;
+        });
+    } else {
+        recordsHtml = '<tr><td colspan="7" class="text-center text-muted py-4">No service records found</div></tr>';
+    }
+    
+    document.getElementById('searchResult').innerHTML = `
+        <div class="user-result-card">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <div>
+                    <h4 class="mb-1">${escapeHtml(user.full_name)}</h4>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="role-badge ${roleClass}"><i class="bi ${roleIcon}"></i> ${roleName}</span>
+                        <span class="text-muted"><i class="bi bi-envelope"></i> ${escapeHtml(user.email)}</span>
+                        <span class="text-muted"><i class="bi bi-person-badge"></i> ${escapeHtml(user.employee_id)}</span>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="clearSearch()">
+                    <i class="bi bi-x-lg me-1"></i> Clear
+                </button>
+            </div>
+            ${statsHtml}
+            <h6 class="fw-semibold mb-2 mt-3">Recent Service Records</h6>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Company</th>
+                            <th>Description</th>
+                            <th class="text-end">LOIT CB</th>
+                            <th class="text-end">LOIT SB</th>
+                            <th class="text-end">Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>${recordsHtml}</tbody>
+                </table>
+            </div>
+            ${data.records && data.records.length > 10 ? `<div class="text-center mt-2"><small class="text-muted">Showing 10 of ${data.records.length} records</small></div>` : ''}
+        </div>
+    `;
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchResult').innerHTML = `
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-person-search fs-1"></i>
+            <p class="mt-3">Enter a name, email, or employee ID to search</p>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

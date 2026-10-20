@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Unit Analysis - Analytics{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet">
+<style>
+    .analysis-card {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .unit-summary-card {
+        background: #F8FAFE;
+        border-radius: 20px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #E2E8F0;
+        height: 100%;
+    }
+    .resource-bar {
+        background: #E2E8F0;
+        border-radius: 40px;
+        height: 8px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+    .resource-bar-fill {
+        background: #1E3A5F;
+        height: 100%;
+        border-radius: 40px;
+        transition: width 0.3s ease;
+    }
+    .data-table {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    .data-table th {
+        background: #F8FAFE;
+        padding: 0.75rem;
+        font-weight: 600;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    .data-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #E2E8F0;
+        vertical-align: middle;
+    }
+    .amount-cb { color: #059669; font-weight: 600; }
+    .amount-sb { color: #D97706; font-weight: 600; }
+    .filter-section {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .quick-filter-btn {
+        border-radius: 40px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        border: 1px solid #E2E8F0;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .quick-filter-btn:hover {
+        background: #E2E8F0;
+    }
+    .quick-filter-btn.active {
+        background: #1E3A5F;
+        color: white;
+        border-color: #1E3A5F;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-6 fw-bold mb-0" style="color: #0A2540;">Unit Analysis</h1>
+            <p class="text-muted">Revenue breakdown by unit</p>
+        </div>
+        <div>
+            <a href="{{ url_for('payment.analytics_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Card with Date Picker -->
+    <div class="filter-section">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Select Unit</label>
+                <select id="unitSelect" class="form-select">
+                    <option value="">-- Select a Unit --</option>
+                    {% for unit in units %}
+                    <option value="{{ unit.id }}">{{ unit.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar-range me-1"></i> Date Range</label>
+                <input type="text" id="dateRangePicker" class="form-control" placeholder="Select date range">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-primary rounded-pill w-100" onclick="loadAnalysis()">
+                    <i class="bi bi-eye me-2"></i> View
+                </button>
+            </div>
+        </div>
+        
+        
+    </div>
+
+    <!-- Results Container -->
+    <div id="analysisResult">
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-diagram-3 fs-1"></i>
+            <p class="mt-3">Select a unit and date range to view analysis</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// ============ HELPER FUNCTIONS ============
+function formatCurrency(amount) {
+    if (amount === undefined || amount === null || isNaN(amount)) return 'Rs 0.00';
+    return 'Rs ' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============ DATE RANGE ============
+let dateRange = { start: moment().startOf('month').format('YYYY-MM-DD'), end: moment().endOf('month').format('YYYY-MM-DD') };
+
+// ============ QUICK FILTERS - FIXED ============
+function setQuickDate(type, buttonElement) {
+    let start, end;
+    const today = moment();
+    
+    switch(type) {
+        case 'week':
+            start = today.clone().startOf('week');
+            end = today.clone().endOf('week');
+            break;
+        case 'month':
+            start = today.clone().startOf('month');
+            end = today.clone().endOf('month');
+            break;
+        case 'quarter':
+            start = today.clone().startOf('quarter');
+            end = today.clone().endOf('quarter');
+            break;
+        case 'year':
+            start = today.clone().startOf('year');
+            end = today.clone().endOf('year');
+            break;
+        case 'last30':
+            start = today.clone().subtract(29, 'days');
+            end = today;
+            break;
+        default:
+            return;
+    }
+    
+    // Update date range picker
+    if (window.dateRangePicker) {
+        window.dateRangePicker.setStartDate(start);
+        window.dateRangePicker.setEndDate(end);
+    }
+    
+    // Update dateRange variable
+    dateRange.start = start.format('YYYY-MM-DD');
+    dateRange.end = end.format('YYYY-MM-DD');
+    
+    // Update active button styling
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    }
+    
+    // Auto-load if a unit is already selected
+    const unitId = document.getElementById('unitSelect').value;
+    if (unitId) {
+        loadAnalysis();
+    }
+}
+
+$(document).ready(function() {
+    // Initialize date range picker
+    window.dateRangePicker = $('#dateRangePicker').daterangepicker({
+        startDate: moment().startOf('month'),
+        endDate: moment().endOf('month'),
+        locale: { format: 'YYYY-MM-DD' },
+        ranges: {
+            'This Week': [moment().startOf('week'), moment().endOf('week')],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            'This Quarter': [moment().startOf('quarter'), moment().endOf('quarter')],
+            'This Year': [moment().startOf('year'), moment().endOf('year')],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()]
+        }
+    }).on('apply.daterangepicker', function(ev, picker) {
+        dateRange.start = picker.startDate.format('YYYY-MM-DD');
+        dateRange.end = picker.endDate.format('YYYY-MM-DD');
+        
+        // Remove active class from quick filter buttons when manual date is selected
+        document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Auto-load if a unit is already selected
+        const unitId = document.getElementById('unitSelect').value;
+        if (unitId) loadAnalysis();
+    });
+    
+    // Auto-load when unit changes
+    document.getElementById('unitSelect').addEventListener('change', function() {
+        if (this.value) loadAnalysis();
+    });
+});
+
+// ============ LOAD ANALYSIS ============
+async function loadAnalysis() {
+    const unitId = document.getElementById('unitSelect').value;
+    if (!unitId) {
+        Swal.fire({ icon: 'warning', title: 'Warning', text: 'Please select a unit', confirmButtonColor: '#1E3A5F' });
+        return;
+    }
+    
+    Swal.fire({ title: 'Loading...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    
+    try {
+        const url = `/api/payment/analytics/unit-analysis?unit_id=${unitId}&date_from=${dateRange.start}&date_to=${dateRange.end}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        Swal.close();
+        
+        if (result.success) {
+            displayAnalysis(result);
+        } else {
+            document.getElementById('analysisResult').innerHTML = `<div class="alert alert-warning">${result.error}</div>`;
+        }
+    } catch (error) {
+        Swal.close();
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message, confirmButtonColor: '#DC2626' });
+    }
+}
+
+// ============ DISPLAY ANALYSIS ============
+function displayAnalysis(data) {
+    // Monthly breakdown
+    let monthlyHtml = '';
+    if (data.monthly_breakdown && data.monthly_breakdown.length > 0) {
+        data.monthly_breakdown.forEach(m => {
+            monthlyHtml += `
+                <tr>
+                    <td class="text-nowrap">${m.month}</td>
+                    <td class="text-center">${m.service_count}</td>
+                    <td class="text-end fw-bold">${formatCurrency(m.total)}</td>
+                </tr>
+            `;
+        });
+    } else {
+        monthlyHtml = '<tr><td colspan="3" class="text-center text-muted">No data available</td>';
+    }
+    
+    // Resource breakdown with bars
+    let resourceHtml = '';
+    if (data.resource_breakdown && data.resource_breakdown.length > 0) {
+        const maxQuantity = Math.max(...data.resource_breakdown.map(r => r.quantity));
+        data.resource_breakdown.forEach(r => {
+            const percent = maxQuantity > 0 ? (r.quantity / maxQuantity) * 100 : 0;
+            resourceHtml += `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${escapeHtml(r.name)}</strong>
+                            <div class="small text-muted">${r.quantity.toFixed(0)} ${r.uom}s</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold text-primary">${formatCurrency(r.total)}</span>
+                        </div>
+                    </div>
+                    <div class="resource-bar">
+                        <div class="resource-bar-fill" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        resourceHtml = '<div class="text-center text-muted py-4">No resource data available</div>';
+    }
+    
+    document.getElementById('analysisResult').innerHTML = `
+        <div class="analysis-card">
+            <h3 class="fw-bold mb-3">${escapeHtml(data.unit_name)}</h3>
+            
+            <!-- Summary Stats with LOLC Showback -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="unit-summary-card">
+                        <small class="text-muted">Total Services</small>
+                        <h2 class="mb-0 mt-1">${data.summary.total_services}</h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="unit-summary-card">
+                        <small class="text-muted">LOIT Chargeback</small>
+                        <h4 class="mb-0 mt-1 text-success">${formatCurrency(data.summary.total_loit_cb)}</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="unit-summary-card">
+                        <small class="text-muted">LOIT Showback</small>
+                        <h4 class="mb-0 mt-1 text-warning">${formatCurrency(data.summary.total_loit_sb)}</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="unit-summary-card">
+                        <small class="text-muted">Showback</small>
+                        <h4 class="mb-0 mt-1 text-info">${formatCurrency(data.summary.total_lolc_sb || 0)}</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="unit-summary-card">
+                        <small class="text-muted">Grand Total</small>
+                        <h2 class="mb-0 mt-1 text-primary">${formatCurrency(data.summary.total_grand)}</h2>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-7">
+                    <h5 class="fw-semibold mb-3"><i class="bi bi-box-seam me-2"></i>Resource Utilization</h5>
+                    <div class="bg-light rounded-3 p-3">
+                        ${resourceHtml}
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <h5 class="fw-semibold mb-3"><i class="bi bi-calendar-month me-2"></i>Monthly Breakdown</h5>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-center">Services</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${monthlyHtml}</tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td class="fw-bold">TOTAL</td>
+                                    <td class="text-center fw-bold">${data.summary.total_services}</td>
+                                    <td class="text-end fw-bold text-primary">${formatCurrency(data.summary.total_grand)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm"
+             style="background: linear-gradient(135deg, #394fb0 0%, #5f93e1 100%); overflow: hidden;">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <!-- Animated waving/smiling face -->
+                    
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="text-white fw-semibold" id="greetingMessage"></span>
+                        <span class="badge bg-light text-dark fs-6">{{ current_user.full_name }}</span>
+
+                        <div class="wave-emoji">
+                        <i class="bi bi-emoji-smile fs-3 text-white"></i>
+                        </div>
+                        
+                        <span class="text-white">Welcome back!</span>
+                        
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .wave-emoji {
+        display: inline-block;
+        animation: wave 1.5s ease-in-out infinite;
+        transform-origin: 70% 70%;
+    }
+    @keyframes wave {
+        0% { transform: rotate(0deg); }
+        20% { transform: rotate(15deg); }
+        40% { transform: rotate(-10deg); }
+        60% { transform: rotate(12deg); }
+        80% { transform: rotate(-5deg); }
+        100% { transform: rotate(0deg); }
+    }
+    .wave-emoji:hover {
+        animation: wave 0.5s ease-in-out;
+    }
+</style>
+
+<script>
+    function setGreeting() {
+        const hour = new Date().getHours();
+        let greeting = '';
+        if (hour < 12) greeting = 'Good Morning';
+        else if (hour < 18) greeting = 'Good Afternoon';
+        else greeting = 'Good Evening';
+        document.getElementById('greetingMessage').innerText = `${greeting}`;
+    }
+    setGreeting();
+</script>

@@ -1,0 +1,296 @@
+<!-- Selection Modal Component - Reusable for Companies, Supervisors, BU Users -->
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 overflow-hidden">
+            <div class="modal-header bg-gradient-primary text-white border-0 py-3">
+                <h5 class="modal-title fw-semibold">
+                    <i class="bi bi-{{ modal_icon }} me-2"></i> {{ modal_title }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Search Bar -->
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 rounded-start-pill">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="{{ modal_id }}_search" class="form-control border-start-0 rounded-end-pill" 
+                               placeholder="Search by name, email, or ID...">
+                    </div>
+                </div>
+
+                <!-- Selection Hint -->
+                <div class="small text-muted mb-2">
+                    <i class="bi bi-{{ 'check2-square' if multi_select else 'record-circle' }} me-1"></i>
+                    {{ 'Select one or more' if multi_select else 'Select one' }} from below:
+                </div>
+
+                <!-- Items Container -->
+                <div id="{{ modal_id }}_items" class="border rounded-3 p-2" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div>
+                        <p class="mt-2 mb-0 text-muted">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+                    <div class="small text-muted">
+                        Showing <span id="{{ modal_id }}_start">0</span> - <span id="{{ modal_id }}_end">0</span> 
+                        of <span id="{{ modal_id }}_total">0</span>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary rounded-start-pill" onclick="loadPage('{{ modal_id }}', 'prev')" id="{{ modal_id }}_prev_btn" disabled>
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary rounded-end-pill" onclick="loadPage('{{ modal_id }}', 'next')" id="{{ modal_id }}_next_btn" disabled>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light py-3">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <span class="badge bg-primary rounded-pill px-3 py-2" id="{{ modal_id }}_selected_count">0 selected</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4" onclick="confirmSelection('{{ modal_id }}')">
+                            <i class="bi bi-check-circle me-1"></i> Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global state for each modal
+let modalStates = {};
+
+async function loadPage(modalId, direction) {
+    const state = modalStates[modalId];
+    if (!state) return;
+    
+    if (direction === 'prev' && state.currentPage > 1) {
+        state.currentPage--;
+    } else if (direction === 'next' && state.currentPage < state.totalPages) {
+        state.currentPage++;
+    } else {
+        return;
+    }
+    
+    await fetchItems(modalId);
+}
+
+async function fetchItems(modalId) {
+    const state = modalStates[modalId];
+    if (!state) return;
+    
+    const searchTerm = document.getElementById(`${modalId}_search`)?.value || '';
+    
+    // Show loading
+    const container = document.getElementById(`${modalId}_items`);
+    if (container) {
+        container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div><p class="mt-2 mb-0 text-muted">Loading...</p></div>';
+    }
+    
+    try {
+        const url = `${state.apiUrl}?page=${state.currentPage}&per_page=10&search=${encodeURIComponent(searchTerm)}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            state.totalPages = result.total_pages;
+            state.totalItems = result.total;
+            state.items = result.items;
+            
+            renderItems(modalId, result.items);
+            updatePagination(modalId);
+        }
+    } catch (error) {
+        console.error('Error fetching items:', error);
+        if (container) {
+            container.innerHTML = '<div class="text-center py-4 text-danger"><i class="bi bi-exclamation-circle fs-3"></i><p class="mt-2">Failed to load data</p></div>';
+        }
+    }
+}
+
+function renderItems(modalId, items) {
+    const state = modalStates[modalId];
+    const container = document.getElementById(`${modalId}_items`);
+    if (!container) return;
+    
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-inbox fs-3"></i><p class="mt-2">No items found</p></div>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    
+    items.forEach(item => {
+        const isChecked = state.selectedIds.has(item.id);
+        const isSingleSelect = !state.multiSelect;
+        
+        if (state.multiSelect) {
+            html += `
+                <div class="list-group-item d-flex align-items-center gap-3 border-0 py-2" data-item-id="${item.id}">
+                    <input type="checkbox" class="form-check-input fs-5 me-2" id="item_${modalId}_${item.id}" 
+                           data-id="${item.id}" data-name="${escapeHtml(item.name)}"
+                           ${state.displayField2 ? `data-field2="${escapeHtml(item.field2 || '')}"` : ''}
+                           onchange="toggleSelection('${modalId}', ${item.id}, this.checked)">
+                    <label class="flex-grow-1" for="item_${modalId}_${item.id}">
+                        <strong>${escapeHtml(item.name)}</strong>
+                        ${item.field2 ? `<br><small class="text-muted">${escapeHtml(item.field2)}</small>` : ''}
+                        ${item.field3 ? `<br><small class="text-muted">${escapeHtml(item.field3)}</small>` : ''}
+                    </label>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="list-group-item d-flex align-items-center gap-3 border-0 py-2 ${isChecked ? 'active bg-primary bg-opacity-10' : ''}" 
+                     data-item-id="${item.id}" onclick="singleSelect('${modalId}', ${item.id}, '${escapeHtml(item.name)}', ${item.field2 ? `'${escapeHtml(item.field2)}'` : 'null'})">
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="${modalId}_radio" id="item_${modalId}_${item.id}" 
+                               ${isChecked ? 'checked' : ''}>
+                    </div>
+                    <label class="flex-grow-1" for="item_${modalId}_${item.id}">
+                        <strong>${escapeHtml(item.name)}</strong>
+                        ${item.field2 ? `<br><small class="text-muted">${escapeHtml(item.field2)}</small>` : ''}
+                        ${item.field3 ? `<br><small class="text-muted">${escapeHtml(item.field3)}</small>` : ''}
+                    </label>
+                </div>
+            `;
+        }
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+    
+    // Update selected count display
+    updateSelectedCount(modalId);
+}
+
+function toggleSelection(modalId, id, isChecked) {
+    const state = modalStates[modalId];
+    if (isChecked) {
+        state.selectedIds.add(id);
+    } else {
+        state.selectedIds.delete(id);
+    }
+    updateSelectedCount(modalId);
+}
+
+function singleSelect(modalId, id, name, field2) {
+    const state = modalStates[modalId];
+    state.selectedIds.clear();
+    state.selectedIds.add(id);
+    state.selectedName = name;
+    state.selectedField2 = field2;
+    
+    // Update radio button styling
+    document.querySelectorAll(`#${modalId}_items .list-group-item`).forEach(item => {
+        item.classList.remove('active', 'bg-primary', 'bg-opacity-10');
+        const radio = item.querySelector('.form-check-input');
+        if (radio && radio.value == id) {
+            radio.checked = true;
+            item.classList.add('active', 'bg-primary', 'bg-opacity-10');
+        } else if (radio) {
+            radio.checked = false;
+        }
+    });
+    
+    updateSelectedCount(modalId);
+}
+
+function updateSelectedCount(modalId) {
+    const state = modalStates[modalId];
+    const countElem = document.getElementById(`${modalId}_selected_count`);
+    if (countElem) {
+        const count = state.selectedIds.size;
+        countElem.innerHTML = `${count} selected`;
+        countElem.className = count > 0 ? 'badge bg-primary rounded-pill px-3 py-2' : 'badge bg-secondary rounded-pill px-3 py-2';
+    }
+}
+
+function updatePagination(modalId) {
+    const state = modalStates[modalId];
+    const startElem = document.getElementById(`${modalId}_start`);
+    const endElem = document.getElementById(`${modalId}_end`);
+    const totalElem = document.getElementById(`${modalId}_total`);
+    const prevBtn = document.getElementById(`${modalId}_prev_btn`);
+    const nextBtn = document.getElementById(`${modalId}_next_btn`);
+    
+    if (startElem) {
+        const start = (state.currentPage - 1) * 10 + 1;
+        startElem.textContent = Math.min(start, state.totalItems);
+    }
+    if (endElem) {
+        const end = Math.min(state.currentPage * 10, state.totalItems);
+        endElem.textContent = end;
+    }
+    if (totalElem) totalElem.textContent = state.totalItems;
+    if (prevBtn) prevBtn.disabled = state.currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = state.currentPage >= state.totalPages;
+}
+
+function confirmSelection(modalId) {
+    const state = modalStates[modalId];
+    state.onConfirm(state.selectedIds, state.selectedName, state.selectedField2);
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+    if (modal) modal.hide();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function initSelectionModal(modalId, config) {
+    modalStates[modalId] = {
+        apiUrl: config.apiUrl,
+        multiSelect: config.multiSelect || false,
+        selectedIds: new Set(config.initialSelectedIds || []),
+        selectedName: config.initialName || null,
+        selectedField2: config.initialField2 || null,
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        items: [],
+        onConfirm: config.onConfirm
+    };
+    
+    // Add search event listener
+    const searchInput = document.getElementById(`${modalId}_search`);
+    if (searchInput) {
+        searchInput.addEventListener('keyup', debounce(() => {
+            modalStates[modalId].currentPage = 1;
+            fetchItems(modalId);
+        }, 300));
+    }
+    
+    // Initial load
+    fetchItems(modalId);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>

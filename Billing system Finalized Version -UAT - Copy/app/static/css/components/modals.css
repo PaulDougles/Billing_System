@@ -1,0 +1,113 @@
+/* ========================================
+   MODALS.CSS - Modal Styles
+   ======================================== */
+
+.modal-content {
+    border-radius: var(--border-radius-card);
+    border: none;
+    box-shadow: var(--modal-shadow);
+    overflow: hidden;
+}
+
+.modal-header-custom {
+    background: var(--bg-active);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    border: none;
+}
+
+.modal-header-custom .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+/* Modal XL Custom */
+.modal-xl-custom {
+    max-width: 95% !important;
+    width: 1300px !important;
+}
+
+/* Document Modal */
+.doc-item {
+    background: #F9FBFD;
+    border-radius: 20px;
+    transition: var(--transition-smooth);
+    border: 1px solid #EFF3F8;
+}
+
+.doc-item:hover {
+    background: white;
+    border-color: #CFE2F0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Resource Chip */
+.resource-chip {
+    background: #F1F5F9;
+    padding: 4px 10px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    display: inline-block;
+    margin: 2px;
+}
+
+/* Quantity Badge */
+.quantity-badge {
+    display: inline-block;
+    background: #E2E8F0;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.status-approved { background: #D1FAE5; color: #065F46; }
+.status-pending { background: #FEF3C7; color: #92400E; }
+.status-rejected { background: #FEE2E2; color: #991B1B; }
+.status-invoiced { background: #DBEAFE; color: #1E40AF; }
+
+/* Approval Header */
+.approval-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.approval-title {
+    font-weight: 600;
+    color: #1E293B;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Comment Box */
+.comment-box {
+    background: white;
+    border-radius: 12px;
+    padding: 0.75rem;
+    border-left: 3px solid;
+    margin-top: 0.75rem;
+}
+
+.comment-box.info { border-left-color: var(--accent-info); }
+.comment-box.warning { border-left-color: var(--accent-warning); }
+.comment-box.success { border-left-color: var(--accent-success); }
+.comment-box.danger { border-left-color: var(--accent-danger); }
+
+.comment-text {
+    font-size: 0.8rem;
+    color: #475569;
+    margin: 0;
+}

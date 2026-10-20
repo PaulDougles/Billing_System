@@ -1,0 +1,609 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Unit - {{ unit.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert.alert-dismissible, .alert.alert-success, .alert.alert-danger, .alert-info {
+        display: none !important;
+    }
+    .form-container {
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+    }
+    .section-card {
+        border-radius: 20px;
+        border: 1px solid #EFF3F8;
+        transition: all 0.2s;
+    }
+    .section-card:hover {
+        border-color: #CFE2F0;
+    }
+    .form-control, .form-select {
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.75rem 1rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #D97706;
+        box-shadow: 0 0 0 3px rgba(217,119,6,0.1);
+    }
+    .status-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+    .selected-badge {
+        background: #E8F0FE;
+        color: #1E4D6F;
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .selected-badge-supervisor {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    .selected-badge .remove-btn {
+        cursor: pointer;
+        color: #999;
+        transition: color 0.2s;
+    }
+    .selected-badge .remove-btn:hover {
+        color: #dc3545;
+    }
+    .selection-area {
+        min-height: 50px;
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #1E4D6F 0%, #2C7DA0 100%);
+    }
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #D97706 0%, #EA8C2B 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-warning bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-pencil-square fs-2 text-warning"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: #0B2B40;">Edit Unit</h1>
+                    <p class="text-secondary-emphasis mt-1">Update {{ unit.name }} configuration</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('admin.manage_units') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Units
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center" data-aos="fade-up">
+        <div class="col-lg-9">
+            <div class="form-container bg-white rounded-4 position-relative">
+                {% if not unit.is_active %}
+                <div class="status-badge">
+                    <span class="badge bg-secondary rounded-pill px-3 py-2"><i class="bi bi-pause-circle me-1"></i> Inactive</span>
+                </div>
+                {% endif %}
+                <div class="bg-gradient-warning p-4 text-white">
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-building-gear me-2"></i> Edit Unit: {{ unit.name }}</h5>
+                   
+                </div>
+                <div class="p-4 p-lg-5">
+                    <form method="POST" action="{{ url_for('admin.edit_unit', unit_id=unit.id) }}" id="unitForm">
+                        <!-- Basic Info -->
+                        <div class="section-card p-4 mb-4">
+                            <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle me-2 text-warning"></i>Basic Information</h6>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Unit Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="unitName" name="name" value="{{ unit.name }}" required>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label fw-semibold">Description</label>
+                                <textarea class="form-control" id="unitDescription" name="description" rows="3">{{ unit.description or '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Assigned Companies -->
+                        <div class="section-card p-4 mb-4">
+                            <h6 class="fw-semibold mb-3"><i class="bi bi-building me-2 text-warning"></i>Assigned Companies</h6>
+                            <div class="selection-area" id="selectedCompaniesArea"></div>
+                            <input type="hidden" id="selectedCompaniesInput" name="company_ids">
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-outline-primary rounded-pill" onclick="openCompanyModal()">
+                                    <i class="bi bi-building-add me-1"></i> Select Companies
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Unit Supervisor -->
+                        <div class="section-card p-4 mb-4">
+                            <h6 class="fw-semibold mb-3"><i class="bi bi-person-check me-2 text-warning"></i>Unit Supervisor</h6>
+                            <div class="selection-area" id="selectedSupervisorArea"></div>
+                            <input type="hidden" id="selectedSupervisorInput" name="supervisor_id">
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-outline-primary rounded-pill" onclick="openSupervisorModal()">
+                                    <i class="bi bi-person-plus me-1"></i> Select Supervisor
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Team Members -->
+                        <div class="section-card p-4 mb-4">
+                            <h6 class="fw-semibold mb-3"><i class="bi bi-people me-2 text-warning"></i>Team Members</h6>
+                            <div class="selection-area" id="selectedMembersArea"></div>
+                            <input type="hidden" id="selectedMembersInput" name="member_ids">
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-outline-primary rounded-pill" onclick="openMemberModal()">
+                                    <i class="bi bi-person-plus me-1"></i> Select Members
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex gap-3 justify-content-end mt-4 pt-2">
+                            <a href="{{ url_for('admin.manage_units') }}" class="btn btn-secondary rounded-pill px-5 py-2">Cancel</a>
+                            <button type="submit" class="btn btn-warning rounded-pill px-5 py-2">
+                                <i class="bi bi-save me-2"></i> Update Unit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// ============ INITIAL DATA FROM BACKEND ============
+const initialCompanyIds = {{ selected_company_ids | tojson }};
+const initialCompanyNames = {{ selected_company_names | tojson }};
+const initialSupervisorId = {{ unit.supervisor_id | default(null) | tojson }};
+const initialSupervisorName = "{{ unit.supervisor.full_name if unit.supervisor else '' }}";
+const initialMemberIds = {{ selected_member_ids | tojson }};
+const initialMemberNames = {{ selected_member_names | tojson }};
+
+// ============ STORE SELECTIONS ============
+let selectedCompaniesMap = new Map();
+let selectedSupervisor = { id: null, name: null };
+let selectedMembersMap = new Map();
+
+// ============ INITIALIZE SELECTIONS ============
+function initializeSelections() {
+    // Initialize companies
+    if (initialCompanyIds && initialCompanyNames) {
+        for (let i = 0; i < initialCompanyIds.length; i++) {
+            selectedCompaniesMap.set(initialCompanyIds[i], initialCompanyNames[i]);
+        }
+    }
+    updateCompaniesDisplay();
+    document.getElementById('selectedCompaniesInput').value = Array.from(selectedCompaniesMap.keys()).join(',');
+    
+    // Initialize supervisor
+    if (initialSupervisorId && initialSupervisorName) {
+        selectedSupervisor = { id: initialSupervisorId, name: initialSupervisorName };
+    }
+    updateSupervisorDisplay();
+    document.getElementById('selectedSupervisorInput').value = selectedSupervisor.id || '';
+    
+    // Initialize members
+    if (initialMemberIds && initialMemberNames) {
+        for (let i = 0; i < initialMemberIds.length; i++) {
+            selectedMembersMap.set(initialMemberIds[i], initialMemberNames[i]);
+        }
+    }
+    updateMembersDisplay();
+    document.getElementById('selectedMembersInput').value = Array.from(selectedMembersMap.keys()).join(',');
+}
+
+// ============ UPDATE DISPLAYS ============
+function updateCompaniesDisplay() {
+    const area = document.getElementById('selectedCompaniesArea');
+    const input = document.getElementById('selectedCompaniesInput');
+    
+    if (selectedCompaniesMap.size === 0) {
+        area.innerHTML = '<span class="text-muted">No companies selected. Click "Select Companies" to add.</span>';
+        input.value = '';
+        return;
+    }
+    
+    let html = '<div class="d-flex flex-wrap gap-2">';
+    for (const [id, name] of selectedCompaniesMap) {
+        html += `
+            <span class="selected-badge">
+                <i class="bi bi-building me-1"></i> ${escapeHtml(name)}
+                <i class="bi bi-x-circle remove-btn" onclick="removeCompany(${id})"></i>
+            </span>
+        `;
+    }
+    html += '</div>';
+    area.innerHTML = html;
+    input.value = Array.from(selectedCompaniesMap.keys()).join(',');
+}
+
+function updateSupervisorDisplay() {
+    const area = document.getElementById('selectedSupervisorArea');
+    const input = document.getElementById('selectedSupervisorInput');
+    
+    if (!selectedSupervisor.id) {
+        area.innerHTML = '<span class="text-muted">No supervisor selected. Click "Select Supervisor" to assign.</span>';
+        input.value = '';
+        return;
+    }
+    
+    area.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+            <span class="selected-badge selected-badge-supervisor">
+                <i class="bi bi-person-check me-1"></i> ${escapeHtml(selectedSupervisor.name)}
+                <i class="bi bi-x-circle remove-btn" onclick="removeSupervisor()"></i>
+            </span>
+        </div>
+    `;
+    input.value = selectedSupervisor.id;
+}
+
+function updateMembersDisplay() {
+    const area = document.getElementById('selectedMembersArea');
+    const input = document.getElementById('selectedMembersInput');
+    
+    if (selectedMembersMap.size === 0) {
+        area.innerHTML = '<span class="text-muted">No team members selected. Click "Select Members" to add BU users.</span>';
+        input.value = '';
+        return;
+    }
+    
+    let html = '<div class="d-flex flex-wrap gap-2">';
+    for (const [id, name] of selectedMembersMap) {
+        html += `
+            <span class="selected-badge">
+                <i class="bi bi-person me-1"></i> ${escapeHtml(name)}
+                <i class="bi bi-x-circle remove-btn" onclick="removeMember(${id})"></i>
+            </span>
+        `;
+    }
+    html += '</div>';
+    area.innerHTML = html;
+    input.value = Array.from(selectedMembersMap.keys()).join(',');
+}
+
+function removeCompany(id) {
+    selectedCompaniesMap.delete(id);
+    updateCompaniesDisplay();
+}
+
+function removeSupervisor() {
+    selectedSupervisor = { id: null, name: null };
+    updateSupervisorDisplay();
+}
+
+function removeMember(id) {
+    selectedMembersMap.delete(id);
+    updateMembersDisplay();
+}
+
+// ============ COMPANY MODAL ============
+async function openCompanyModal() {
+    let currentPage = 1;
+    let searchTerm = '';
+    
+    const loadPage = async (page) => {
+        currentPage = page;
+        try {
+            const response = await fetch(`/api/companies/paginated?page=${page}&per_page=10&search=${encodeURIComponent(searchTerm)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                let html = `<div class="list-group">`;
+                data.items.forEach(item => {
+                    const isChecked = selectedCompaniesMap.has(item.id);
+                    html += `
+                        <div class="list-group-item d-flex align-items-center gap-3 border-0 py-2">
+                            <input type="checkbox" class="form-check-input fs-5" value="${item.id}" data-name="${escapeHtml(item.name)}" ${isChecked ? 'checked' : ''}>
+                            <div>
+                                <strong>${escapeHtml(item.name)}</strong>
+                                ${item.code ? `<br><small class="text-muted">${escapeHtml(item.code)}</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                document.getElementById('companyItemsContainer').innerHTML = html;
+                document.getElementById('companyPageInfo').innerHTML = `Page ${data.page} of ${data.total_pages} (${data.total} total)`;
+                document.getElementById('companyPrevBtn').disabled = page <= 1;
+                document.getElementById('companyNextBtn').disabled = page >= data.total_pages;
+                
+                document.querySelectorAll('#companyItemsContainer input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        const id = parseInt(this.value);
+                        const name = this.getAttribute('data-name');
+                        if (this.checked) {
+                            selectedCompaniesMap.set(id, name);
+                        } else {
+                            selectedCompaniesMap.delete(id);
+                        }
+                        updateCompaniesDisplay();
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error loading companies:', error);
+            document.getElementById('companyItemsContainer').innerHTML = '<div class="text-center text-danger">Error loading companies</div>';
+        }
+    };
+    
+    const modalHtml = `
+        <div class="mb-3">
+            <input type="text" id="companySearch" class="form-control" placeholder="Search companies by name or code...">
+        </div>
+        <div id="companyItemsContainer" style="max-height: 400px; overflow-y: auto;" class="border rounded-3 p-2">Loading...</div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button id="companyPrevBtn" class="btn btn-sm btn-outline-secondary rounded-pill" disabled>Previous</button>
+            <span id="companyPageInfo" class="text-muted">Page 1 of 1</span>
+            <button id="companyNextBtn" class="btn btn-sm btn-outline-secondary rounded-pill" disabled>Next</button>
+        </div>
+    `;
+    
+    await Swal.fire({
+        title: 'Select Companies',
+        html: modalHtml,
+        width: '650px',
+        showCancelButton: true,
+        confirmButtonText: 'Confirm Selection',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#D97706',
+        didOpen: async () => {
+            await loadPage(1);
+            
+            document.getElementById('companySearch').addEventListener('input', debounce(async (e) => {
+                searchTerm = e.target.value;
+                await loadPage(1);
+            }, 300));
+            
+            document.getElementById('companyPrevBtn').onclick = () => loadPage(currentPage - 1);
+            document.getElementById('companyNextBtn').onclick = () => loadPage(currentPage + 1);
+        }
+    });
+}
+
+// ============ SUPERVISOR MODAL ============
+async function openSupervisorModal() {
+    let currentPage = 1;
+    let searchTerm = '';
+    
+    const loadPage = async (page) => {
+        currentPage = page;
+        try {
+            const response = await fetch(`/api/users/supervisors/paginated?page=${page}&per_page=10&search=${encodeURIComponent(searchTerm)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                let html = `<div class="list-group">`;
+                data.items.forEach(item => {
+                    const isChecked = selectedSupervisor.id === item.id;
+                    html += `
+                        <div class="list-group-item d-flex align-items-center gap-3 border-0 py-2 ${isChecked ? 'active bg-primary bg-opacity-10' : ''}" 
+                             onclick="selectSupervisorFromModal(${item.id}, '${escapeHtml(item.name)}')">
+                            <input type="radio" class="form-check-input" name="supervisorRadio" value="${item.id}" ${isChecked ? 'checked' : ''}>
+                            <div>
+                                <strong>${escapeHtml(item.name)}</strong>
+                                <br><small class="text-muted">${escapeHtml(item.email)} | ${escapeHtml(item.employee_id)}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                document.getElementById('supervisorItemsContainer').innerHTML = html;
+                document.getElementById('supervisorPageInfo').innerHTML = `Page ${data.page} of ${data.total_pages} (${data.total} total)`;
+                document.getElementById('supervisorPrevBtn').disabled = page <= 1;
+                document.getElementById('supervisorNextBtn').disabled = page >= data.total_pages;
+            }
+        } catch (error) {
+            console.error('Error loading supervisors:', error);
+            document.getElementById('supervisorItemsContainer').innerHTML = '<div class="text-center text-danger">Error loading supervisors</div>';
+        }
+    };
+    
+    const modalHtml = `
+        <div class="mb-3">
+            <p class="text-muted small">Only users with <strong>Supervisor</strong> role are shown below.</p>
+            <input type="text" id="supervisorSearch" class="form-control" placeholder="Search by name, email, or employee ID...">
+        </div>
+        <div id="supervisorItemsContainer" style="max-height: 400px; overflow-y: auto;" class="border rounded-3 p-2">Loading...</div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button id="supervisorPrevBtn" class="btn btn-sm btn-outline-secondary rounded-pill" disabled>Previous</button>
+            <span id="supervisorPageInfo" class="text-muted">Page 1 of 1</span>
+            <button id="supervisorNextBtn" class="btn btn-sm btn-outline-secondary rounded-pill" disabled>Next</button>
+        </div>
+    `;
+    
+    await Swal.fire({
+        title: 'Select Unit Supervisor',
+        html: modalHtml,
+        width: '650px',
+        showCancelButton: true,
+        confirmButtonText: 'Confirm Selection',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#D97706',
+        didOpen: async () => {
+            await loadPage(1);
+            
+            document.getElementById('supervisorSearch').addEventListener('input', debounce(async (e) => {
+                searchTerm = e.target.value;
+                await loadPage(1);
+            }, 300));
+            
+            document.getElementById('supervisorPrevBtn').onclick = () => loadPage(currentPage - 1);
+            document.getElementById('supervisorNextBtn').onclick = () => loadPage(currentPage + 1);
+        }
+    });
+}
+
+function selectSupervisorFromModal(id, name) {
+    selectedSupervisor = { id: id, name: name };
+    updateSupervisorDisplay();
+    
+    document.querySelectorAll('#supervisorItemsContainer .list-group-item').forEach(item => {
+        item.classList.remove('active', 'bg-primary', 'bg-opacity-10');
+        const radio = item.querySelector('.form-check-input');
+        if (radio && radio.value == id) {
+            radio.checked = true;
+            item.classList.add('active', 'bg-primary', 'bg-opacity-10');
+        } else if (radio) {
+            radio.checked = false;
+        }
+    });
+}
+
+// ============ MEMBER MODAL ============
+async function openMemberModal() {
+    let currentPage = 1;
+    let searchTerm = '';
+    const unitId = {{ unit.id }};
+    
+    const loadPage = async (page) => {
+        currentPage = page;
+        try {
+            const response = await fetch(`/api/users/bu-users/paginated?page=${page}&per_page=10&search=${encodeURIComponent(searchTerm)}&exclude_unit_id=${unitId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                let html = `<div class="list-group">`;
+                data.items.forEach(item => {
+                    const isChecked = selectedMembersMap.has(item.id);
+                    html += `
+                        <div class="list-group-item d-flex align-items-center gap-3 border-0 py-2">
+                            <input type="checkbox" class="form-check-input fs-5" value="${item.id}" data-name="${escapeHtml(item.name)}" ${isChecked ? 'checked' : ''}>
+                            <div>
+                                <strong>${escapeHtml(item.name)}</strong>
+                                <br><small class="text-muted">${escapeHtml(item.email)} | ${escapeHtml(item.employee_id)}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                document.getElementById('memberItemsContainer').innerHTML = html;
+                document.getElementById('memberPageInfo').innerHTML = `Page ${data.page} of ${data.total_pages} (${data.total} total)`;
+                document.getElementById('memberPrevBtn').disabled = page <= 1;
+                document.getElementById('memberNextBtn').disabled = page >= data.total_pages;
+                
+                document.querySelectorAll('#memberItemsContainer input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        const id = parseInt(this.value);
+                        const name = this.getAttribute('data-name');
+                        if (this.checked) {
+                            selectedMembersMap.set(id, name);
+                        } else {
+                            selectedMembersMap.delete(id);
+                        }
+                        updateMembersDisplay();
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error loading members:', error);
+            document.getElementById('memberItemsContainer').innerHTML = '<div class="text-center text-danger">Error loading members</div>';
+        }
+    };
+    
+    const modalHtml = `
+        <div class="mb-3">
+            <input type="text" id="memberSearch" class="form-control" placeholder="Search by name, email, or employee ID...">
+        </div>
+        <div id="memberItemsContainer" style="max-height: 400px; overflow-y: auto;" class="border rounded-3 p-2">Loading...</div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button id="memberPrevBtn" class="btn btn-sm btn-outline-secondary rounded-pill" disabled>Previous</button>
+            <span id="memberPageInfo" class="text-muted">Page 1 of 1</span>
+            <button id="memberNextBtn" class="btn btn-sm btn-outline-secondary rounded-pill" disabled>Next</button>
+        </div>
+    `;
+    
+    await Swal.fire({
+        title: 'Select Team Members',
+        html: modalHtml,
+        width: '650px',
+        showCancelButton: true,
+        confirmButtonText: 'Confirm Selection',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#D97706',
+        didOpen: async () => {
+            await loadPage(1);
+            
+            document.getElementById('memberSearch').addEventListener('input', debounce(async (e) => {
+                searchTerm = e.target.value;
+                await loadPage(1);
+            }, 300));
+            
+            document.getElementById('memberPrevBtn').onclick = () => loadPage(currentPage - 1);
+            document.getElementById('memberNextBtn').onclick = () => loadPage(currentPage + 1);
+        }
+    });
+}
+
+// ============ HELPER FUNCTIONS ============
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, arguments), wait);
+    };
+}
+
+// ============ FORM VALIDATION ============
+document.getElementById('unitForm')?.addEventListener('submit', function(e) {
+    const unitName = document.getElementById('unitName').value.trim();
+    if (!unitName) {
+        e.preventDefault();
+        Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Unit name is required', confirmButtonColor: '#D97706' });
+        return false;
+    }
+    if (selectedCompaniesMap.size === 0) {
+        e.preventDefault();
+        Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Please select at least one company', confirmButtonColor: '#D97706' });
+        return false;
+    }
+    return true;
+});
+
+// ============ INITIALIZE ON PAGE LOAD ============
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSelections();
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({ 
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}', 
+                    title: '{{ category|title }}', 
+                    text: {{ message|tojson }}, 
+                    confirmButtonColor: '#D97706' 
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

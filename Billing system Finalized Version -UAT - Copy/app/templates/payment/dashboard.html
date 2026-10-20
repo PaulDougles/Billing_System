@@ -1,0 +1,687 @@
+{% extends "base.html" %}
+
+{% block title %}{{ payment_team_name }} Dashboard - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .stat-card {
+        transition: all 0.2s ease;
+        border-radius: 24px;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(10, 37, 64, 0.12);
+    }
+    
+    .company-card {
+        transition: all 0.2s ease;
+        border-radius: var(--border-radius-card);
+        overflow: hidden;
+    }
+    .company-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(10, 37, 64, 0.12);
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    .table td {
+        vertical-align: middle;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    .table tfoot td {
+        font-weight: 600;
+        background-color: #F8FAFE;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        margin: 0 2px;
+        border-radius: var(--border-radius-pill);
+    }
+    
+    .btn-info {
+        background: var(--accent-info);
+        border: none;
+    }
+    .btn-info:hover {
+        background: #1E6A8A;
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background: #64748B;
+        border: none;
+    }
+    .btn-secondary:hover {
+        background: #475569;
+        transform: translateY(-1px);
+    }
+    
+    .card-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .dashboard-header-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .company-badge {
+        padding: 4px 12px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .badge-invoiced {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    .badge-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .resource-chip {
+        background: #F1F5F9;
+        padding: 4px 10px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+    
+    .modal-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+    }
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #2C7DA0 0%, #3B9AC6 100%);
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #083345 0%, #496f80 100%);  
+        }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #D97706 0%, #EA8C2B 100%);
+    }
+    .bg-opacity-20 {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Welcome Banner -->
+    {% include 'components/welcome_banner.html' %}
+    
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="dashboard-header-icon">
+                    <i class="bi bi-cash-stack fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">{{ payment_team_name }} Dashboard</h1>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <button class="btn btn-outline-secondary rounded-pill px-4" onclick="location.reload()">
+                <i class="bi bi-arrow-repeat me-2"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5" data-aos="fade-up">
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-success text-white p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-uppercase small fw-semibold opacity-75">Companies</span>
+                        <h2 class="display-7 fw-bold mb-0">{{ companies|length }}</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-3 p-3">
+                        <i class="bi bi-building fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-info text-white p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-uppercase small fw-semibold opacity-75">Total Services</span>
+                        <h2 class="display-7 fw-bold mb-0">{{ total_services }}</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-3 p-3">
+                        <i class="bi bi-receipt fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-primary text-white p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-uppercase small fw-semibold opacity-75">Total Value</span>
+                        <h2 class="fw-bold mb-0" style="font-size: 1.5rem;">Rs {{ "{:,.2f}".format(total_value) }}</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-3 p-3">
+                        <i class="bi bi-cash-stack fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-warning text-white p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-uppercase small fw-semibold opacity-75">Invoiced</span>
+                        <h2 class="display-7 fw-bold mb-0">{{ invoiced_companies }}</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-3 p-3">
+                        <i class="bi bi-check-circle-fill fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Companies List -->
+    {% if companies and companies|length > 0 %}
+        {% for company in companies %}
+        <div class="card company-card border-0 shadow-sm mb-4" data-company-id="{{ company.id }}" data-aos="fade-up">
+            <div class="card-header-custom text-white">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white bg-opacity-20 rounded-3 p-2">
+                            <i class="bi bi-building fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-semibold">{{ company.name }}</h5>
+                            <small class="opacity-75">{{ company.services|length }} service(s)</small>
+                        </div>
+                    </div>
+                    <div>
+                        {% if company.invoiced %}
+                            <span class="company-badge badge-invoiced">
+                                <i class="bi bi-check-circle me-1"></i> Invoiced
+                            </span>
+                        {% else %}
+                            <span class="company-badge badge-pending">
+                                <i class="bi bi-hourglass me-1"></i> Pending
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4" style="width: 15%">Date</th>
+                                <th style="width: 15%">Unit</th>
+                                <th style="width: 40%">Resources</th>
+                                <th style="width: 15%" class="text-end">Amount (Rs)</th>
+                                <th style="width: 15%" class="text-center pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for service in company.services %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">{{ service.submission_date.split(' ')[0] if service.submission_date else 'N/A' }}</div>
+                                    <small class="text-muted">{{ service.submission_date.split(' ')[1] if service.submission_date else '' }}</small>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">{{ service.bu_user.team_name if service.bu_user and service.bu_user.team_name else 'N/A' }}</div>
+                                    <small class="text-muted">{{ service.bu_user.full_name if service.bu_user else '' }}</small>
+                                </td>
+                                <td>
+                                    {% if service.resources and service.resources|length > 0 %}
+                                        {% for r in service.resources %}
+                                        <span class="resource-chip">
+                                            <i class="bi bi-box-seam me-1"></i>
+                                            <strong>{{ r.name }}</strong>
+                                            {% if r.quantity %} ({{ r.quantity }} {{ r.uom|default('units') }}){% endif %}
+                                        </span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted small"><i class="bi bi-info-circle"></i> No resources</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end fw-bold text-primary">Rs {{ "{:,.2f}".format(service.total_amount) }}</td>
+                                <td class="text-center pe-4">
+                                    <div class="btn-group btn-group-sm gap-1">
+                                        <button class="btn btn-outline-info rounded-pill" onclick="viewServiceDetails({{ service.id }})" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary rounded-pill" onclick="viewWorkflow({{ service.id }})" title="View Workflow">
+                                            <i class="bi bi-clock-history"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="ps-4 fw-bold">Company Total:</td>
+                                <td class="text-end fw-bold text-primary pe-4">Rs {{ "{:,.2f}".format(company.total_amount) }}</td>
+                                <td class="pe-4"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card border-0 shadow-sm rounded-4 text-center py-5" data-aos="fade-up">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="mt-3 mb-0 text-muted">No companies with approved services</p>
+        <small class="text-muted">Services will appear here once approved by Finance Controller</small>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Service Details Modal -->
+<div class="modal fade" id="serviceModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header-custom text-white border-0">
+                <h5 class="modal-title fw-semibold"><i class="bi bi-file-text me-2"></i>Service Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="serviceModalBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Close
+                </button>
+                <button class="btn btn-primary rounded-pill px-4" onclick="viewWorkflowFromModal()">
+                    <i class="bi bi-clock-history me-2"></i> View Workflow
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+let currentServiceId = null;
+
+function formatCurrency(amount) {
+    if (amount === undefined || amount === null) return '0.00';
+    return parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+
+function formatDateOnly(utcString) {
+    if (!utcString) return 'N/A';
+    let dateStr = utcString;
+    if (utcString.includes(' ')) {
+        dateStr = utcString.split(' ')[0];
+    }
+    return dateStr;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function viewServiceDetails(serviceId) {
+    currentServiceId = serviceId;
+    const modalBody = document.getElementById('serviceModalBody');
+    modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p>Loading...</p></div>';
+    const modal = new bootstrap.Modal(document.getElementById('serviceModal'));
+    modal.show();
+
+    try {
+        const response = await fetch(`/api/service-items/${serviceId}`);
+        const result = await response.json();
+        if (result.success) {
+            const item = result.service_item;
+            let resourcesHtml = '';
+            let totalLoitChargeback = 0;
+            let totalLoitShowback = 0;
+            let totalLolcShowback = 0;
+            
+            if (item.resources && item.resources.length > 0) {
+                resourcesHtml = `
+                    <div class="mt-4">
+                        <h6 class="fw-semibold"><i class="bi bi-box-seam me-2 text-primary"></i>Resource Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle" style="min-width: 1000px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-end">LOIT CB Rate</th>
+                                        <th class="text-end">LOIT CB Amount</th>
+                                        <th class="text-end">LOIT SB Rate</th>
+                                        <th class="text-end">LOIT SB Amount</th>
+                                        <th class="text-end">Showback Rate</th>
+                                        <th class="text-end">Showback Amount</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                for (const r of item.resources) {
+                    const qty = r.quantity || r.hours || 0;
+                    const uom = r.uom || 'units';
+                    
+                    const loitChargebackRate = r.loit_chargeback_rate || r.chargeback_rate || 0;
+                    const loitShowbackRate = r.loit_showback_rate || 0;
+                    const lolcShowbackRate = r.lolc_showback_rate || r.showback_rate || 0;
+                    
+                    const loitChargebackAmount = qty * loitChargebackRate;
+                    const loitShowbackAmount = qty * loitShowbackRate;
+                    const lolcShowbackAmount = qty * lolcShowbackRate;
+                    const totalAmount = loitChargebackAmount + loitShowbackAmount + lolcShowbackAmount;
+                    
+                    totalLoitChargeback += loitChargebackAmount;
+                    totalLoitShowback += loitShowbackAmount;
+                    totalLolcShowback += lolcShowbackAmount;
+                    
+                    resourcesHtml += `
+                        <tr>
+                            <td>
+                                <strong>${escapeHtml(r.name)}</strong>
+                                
+                             </div>
+                            <td class="text-center">
+                                <span class="badge bg-dark">${qty} ${uom}</span>
+                             </div>
+                            <td class="text-end">${formatCurrency(loitChargebackRate)}</div>
+                            <td class="text-end amount-cb">Rs ${formatCurrency(loitChargebackAmount)}</div>
+                            <td class="text-end">${formatCurrency(loitShowbackRate)}</div>
+                            <td class="text-end amount-sb">Rs ${formatCurrency(loitShowbackAmount)}</div>
+                            <td class="text-end">${formatCurrency(lolcShowbackRate)}</div>
+                            <td class="text-end amount-lolc">Rs ${formatCurrency(lolcShowbackAmount)}</div>
+                            <td class="text-end fw-bold text-primary">Rs ${formatCurrency(totalAmount)}</div>
+                         </div>
+                    `;
+                }
+                
+                resourcesHtml += `
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="2" class="text-end fw-bold">Resource Totals:</div>
+                                    <td class="text-end fw-bold">—</div>
+                                    <td class="text-end fw-bold amount-cb">Rs ${formatCurrency(totalLoitChargeback)}</div>
+                                    <td class="text-end fw-bold">—</div>
+                                    <td class="text-end fw-bold amount-sb">Rs ${formatCurrency(totalLoitShowback)}</div>
+                                    <td class="text-end fw-bold">—</div>
+                                    <td class="text-end fw-bold amount-lolc">Rs ${formatCurrency(totalLolcShowback)}</div>
+                                    <td class="text-end fw-bold text-primary">Rs ${formatCurrency(totalLoitChargeback + totalLoitShowback + totalLolcShowback)}</div>
+                                 </div>
+                            </tfoot>
+                          </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resourcesHtml = '<div class="alert alert-info rounded-3 mt-3">No resources recorded for this service.</div>';
+            }
+            
+            // Get totals from API response
+            const loitChargebackTotal = item.loit_chargeback_total || totalLoitChargeback || item.chargeback_total || 0;
+            const loitShowbackTotal = item.loit_showback_total || totalLoitShowback || 0;
+            const lolcShowbackTotal = item.lolc_showback_total || totalLolcShowback || item.showback_total || 0;
+            const loitTotal = loitChargebackTotal + loitShowbackTotal;
+            const grandTotal = loitTotal + lolcShowbackTotal;
+            
+            modalBody.innerHTML = `
+                <style>
+                    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+                    .info-item { background: #F8FAFE; border-radius: 12px; padding: 0.75rem 1rem; border-left: 3px solid #2C7DA0; }
+                    .info-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #64748B; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 5px; }
+                    .info-value { font-size: 0.95rem; font-weight: 600; color: #1E293B; }
+                    .amount-cb { color: #059669; font-weight: 600; }
+                    .amount-sb { color: #D97706; font-weight: 600; }
+                    .amount-lolc { color: #7C3AED; font-weight: 600; }
+                    .quantity-badge {
+                        display: inline-block;
+                        background: #E2E8F0;
+                        padding: 4px 10px;
+                        border-radius: 20px;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                    }
+                    .status-badge {
+                        display: inline-block;
+                        padding: 4px 12px;
+                        border-radius: 40px;
+                        font-size: 0.7rem;
+                        font-weight: 600;
+                    }
+                    .status-approved { background: #D1FAE5; color: #065F46; }
+                    .status-pending { background: #FEF3C7; color: #92400E; }
+                    .status-rejected { background: #FEE2E2; color: #991B1B; }
+                    
+                    /* Summary Card Styles - Compact */
+                    .summary-card-modal {
+                        border-radius: 10px;
+                        padding: 0.5rem 0.75rem;
+                        text-align: center;
+                        transition: all 0.2s ease;
+                        height: 100%;
+                    }
+                    .summary-card-modal small {
+                        font-size: 0.8rem;
+                        opacity: 0.9;
+                        display: block;
+                        line-height: 1.4;
+                    }
+                    .summary-card-modal h4 {
+                        font-size: 1rem;
+                        margin-top: 0.2rem !important;
+                        margin-bottom: 0.1rem;
+                        font-weight: 700;
+                    }
+                    .summary-card-modal h3 {
+                        font-size: 1.1rem;
+                        margin-top: 0.2rem !important;
+                        margin-bottom: 0.1rem;
+                        font-weight: 700;
+                    }
+                    .summary-card-modal .bi {
+                        font-size: 0.7rem;
+                    }
+                    
+                    .card-loit-chargeback { background: linear-gradient(135deg, #059669 0%, #10B981 100%); color: white; }
+                    .card-loit-showback { background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); color: white; }
+                    .card-lolc-showback { background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%); color: white; }
+                    .card-loit-total { background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%); color: white; }
+                    .card-grand-total { background: linear-gradient(135deg, #0A2540 0%, #1E4D6F 100%); color: white; }
+                </style>
+                
+                <!-- Service Information -->
+                <div class="card border-0 shadow-sm rounded-3 mb-3">
+                    <div class="card-body">
+                        <div class="info-grid">
+                            
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-calendar"></i> Submission Date</div>
+                                <div class="info-value">${formatDateOnly(item.submission_date)}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-building"></i> Company</div>
+                                <div class="info-value fw-semibold">${escapeHtml(item.company_name)}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-person-badge"></i> BU User</div>
+                                <div class="info-value">
+                                    ${escapeHtml(item.bu_user?.full_name || 'Unknown')}
+                                    
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-diagram-3"></i> Unit / Team</div>
+                                <div class="info-value">${escapeHtml(item.bu_user?.team_name || 'N/A')}</div>
+                            </div>
+                            
+                            
+                        </div>
+                        
+                        <div class="border rounded-3 p-2 bg-light mt-2">
+                            <small class="text-muted d-block mb-2"><i class="bi bi-file-text"></i> Description</small>
+                            <p class="mb-0">${escapeHtml(item.description) || 'No description provided'}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                ${resourcesHtml}
+                
+                <!-- Financial Summary Cards - Three separate cards -->
+                <div class="row mt-3 g-2">
+                    <div class="col-md-4">
+                        <div class="summary-card-modal card-loit-chargeback">
+                            <small><i class="bi bi-cash-stack me-1"></i> LOIT Chargeback</small>
+                            <h4 class="mt-1 mb-0">Rs ${formatCurrency(loitChargebackTotal)}</h4>
+                           
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-card-modal card-loit-showback">
+                            <small><i class="bi bi-graph-up me-1"></i> LOIT Showback</small>
+                            <h4 class="mt-1 mb-0">Rs ${formatCurrency(loitShowbackTotal)}</h4>
+                            
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-card-modal card-lolc-showback">
+                            <small><i class="bi bi-building me-1"></i> Showback</small>
+                            <h4 class="mt-1 mb-0">Rs ${formatCurrency(lolcShowbackTotal)}</h4>
+                           
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- LOIT Total and Grand Total Row -->
+                <div class="row mt-2 g-2">
+                    <div class="col-md-6">
+                        <div class="summary-card-modal card-loit-total">
+                            <small><i class="bi bi-calculator me-1"></i> LOIT Total</small>
+                            <h4 class="mt-1 mb-0">Rs ${formatCurrency(loitTotal)}</h4>
+                           
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-card-modal card-grand-total">
+                            <small><i class="bi bi-receipt me-1"></i> GRAND TOTAL</small>
+                            <h3 class="mt-1 mb-0 fw-bold">Rs ${formatCurrency(grandTotal)}</h3>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                ${item.head_approval_comment ? `
+                <div class="alert alert-info rounded-3 mt-3">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    <strong>Head of IT Comment:</strong>
+                    <p class="mt-2 mb-0">${escapeHtml(item.head_approval_comment)}</p>
+                </div>
+                ` : ''}
+                
+                ${item.finance_approval_comment ? `
+                <div class="alert alert-info rounded-3 mt-3">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    <strong>Finance Controller Comment:</strong>
+                    <p class="mt-2 mb-0">${escapeHtml(item.finance_approval_comment)}</p>
+                </div>
+                ` : ''}
+            `;
+        } else {
+            modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details</div>';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details</div>';
+    }
+}
+
+function viewWorkflow(serviceId) {
+    window.location.href = `/api/workflow/view/${serviceId}`;
+}
+
+function viewWorkflowFromModal() {
+    if (currentServiceId) {
+        window.location.href = `/api/workflow/view/${currentServiceId}`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Flash messages handling
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

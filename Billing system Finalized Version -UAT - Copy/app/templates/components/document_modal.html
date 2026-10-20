@@ -1,0 +1,366 @@
+<!-- Company Document Modal -->
+<div class="modal fade" id="companyDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-building"></i> Company Documents</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="companyDocumentsList">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Loading documents...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Document Modal -->
+<div class="modal fade" id="serviceDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-text"></i> Service Documents</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#serviceDocsList" type="button" role="tab">
+                            <i class="bi bi-file-earmark-text"></i> Documents
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#uploadServiceDoc" type="button" role="tab">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content mt-3">
+                    <div class="tab-pane fade show active" id="serviceDocsList" role="tabpanel">
+                        <div id="serviceDocumentsList">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2">Loading documents...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="uploadServiceDoc" role="tabpanel">
+                        <form id="uploadServiceDocumentForm" enctype="multipart/form-data">
+                            <input type="hidden" id="serviceCompanyId" name="company_id">
+                            <input type="hidden" id="serviceItemId" name="service_item_id">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Document Name *</label>
+                                <input type="text" class="form-control" id="serviceDocName" name="document_name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Category *</label>
+                                <select class="form-select" id="serviceDocCategory" name="document_category" required>
+                                    <option value="CONTRACT">Contract Agreement</option>
+                                    <option value="INVOICE_SUPPORT">Invoice Support</option>
+                                    <option value="TECH_DOC">Technical Document</option>
+                                    <option value="QUOTE">Quote/Proposal</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="serviceDocDescription" name="description" rows="2"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Select File *</label>
+                                <input type="file" class="form-control" id="serviceDocFile" name="file" required
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt">
+                                <small class="text-muted">Allowed: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, TXT</small>
+                            </div>
+                            
+                            <div id="serviceUploadProgress" style="display: none;">
+                                <div class="progress mb-2">
+                                    <div id="serviceUploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-cloud-upload"></i> Upload Document
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCompanyId = null;
+let currentServiceItemId = null;
+
+function showCompanyDocumentModal(companyId) {
+    currentCompanyId = companyId;
+    loadCompanyDocuments(companyId);
+    const modal = new bootstrap.Modal(document.getElementById('companyDocumentModal'));
+    modal.show();
+}
+
+function showDocumentModal(companyId, serviceItemId) {
+    currentCompanyId = companyId;
+    currentServiceItemId = serviceItemId;
+    
+    document.getElementById('serviceCompanyId').value = companyId;
+    document.getElementById('serviceItemId').value = serviceItemId;
+    
+    // Reset form
+    const form = document.getElementById('uploadServiceDocumentForm');
+    if (form) form.reset();
+    if (document.getElementById('serviceDocName')) document.getElementById('serviceDocName').value = '';
+    if (document.getElementById('serviceDocDescription')) document.getElementById('serviceDocDescription').value = '';
+    
+    loadServiceDocuments(serviceItemId);
+    const modal = new bootstrap.Modal(document.getElementById('serviceDocumentModal'));
+    modal.show();
+}
+
+async function loadCompanyDocuments(companyId) {
+    const container = document.getElementById('companyDocumentsList');
+    if (!container) return;
+    
+    try {
+        const response = await fetch(`/api/documents/company/${companyId}`);
+        const result = await response.json();
+        
+        if (result.success && result.documents.length > 0) {
+            let html = `<div class="list-group">`;
+            
+            result.documents.forEach(doc => {
+                const icon = getFileIcon(doc.file_type);
+                const roleBadge = getRoleBadge(doc.uploader_role);
+                
+                html += `
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col-5">
+                                <i class="bi ${icon} me-2"></i>
+                                <strong>${escapeHtml(doc.name)}</strong>
+                                <br><small class="text-muted">${escapeHtml(doc.original_filename)}</small>
+                            </div>
+                            <div class="col-2">
+                                <span class="badge bg-secondary">${doc.category}</span>
+                            </div>
+                            <div class="col-2">${doc.size_formatted}</div>
+                            <div class="col-3">
+                                ${roleBadge}
+                                <br><small class="text-muted">${doc.created_at}</small>
+                            </div>
+                        </div>
+                        ${doc.description ? `<div class="row mt-1"><div class="col-12"><small class="text-muted">${escapeHtml(doc.description)}</small></div></div>` : ''}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <a href="/api/documents/download/${doc.id}" class="btn btn-sm btn-info me-1">
+                                    <i class="bi bi-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-folder2-open fs-1"></i>
+                    <p class="mt-2">No company documents found</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `<div class="alert alert-danger">Error loading documents</div>`;
+    }
+}
+
+async function loadServiceDocuments(serviceItemId) {
+    const container = document.getElementById('serviceDocumentsList');
+    if (!container) return;
+    
+    try {
+        const response = await fetch(`/api/documents/service/${serviceItemId}`);
+        const result = await response.json();
+        
+        if (result.success && result.documents.length > 0) {
+            let html = `<div class="list-group">`;
+            
+            result.documents.forEach(doc => {
+                const icon = getFileIcon(doc.file_type);
+                const roleBadge = getRoleBadge(doc.uploader_role);
+                
+                html += `
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col-5">
+                                <i class="bi ${icon} me-2"></i>
+                                <strong>${escapeHtml(doc.name)}</strong>
+                                <br><small class="text-muted">${escapeHtml(doc.original_filename)}</small>
+                            </div>
+                            <div class="col-2">
+                                <span class="badge bg-secondary">${doc.category}</span>
+                            </div>
+                            <div class="col-2">${doc.size_formatted}</div>
+                            <div class="col-3">
+                                ${roleBadge}
+                                <br><small class="text-muted">${doc.created_at}</small>
+                            </div>
+                        </div>
+                        ${doc.description ? `<div class="row mt-1"><div class="col-12"><small class="text-muted">${escapeHtml(doc.description)}</small></div></div>` : ''}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <a href="/api/documents/download/${doc.id}" class="btn btn-sm btn-info me-1">
+                                    <i class="bi bi-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-folder2-open fs-1"></i>
+                    <p class="mt-2">No service documents found</p>
+                    <small>Click "Upload" tab to add documents</small>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `<div class="alert alert-danger">Error loading documents</div>`;
+    }
+}
+
+function getRoleBadge(role) {
+    const badges = {
+        'admin': '<span class="badge bg-danger">Admin</span>',
+        'bu_user': '<span class="badge bg-primary">BU Team</span>',
+        'head_of_it': '<span class="badge bg-info">Head of IT</span>',
+        'finance_controller': '<span class="badge bg-success">Finance</span>',
+        'payment_lolc_technologies': '<span class="badge bg-warning">Payment Tech</span>',
+        'payment_company_user': '<span class="badge bg-secondary">Payment User</span>'
+    };
+    return badges[role] || '<span class="badge bg-secondary">User</span>';
+}
+
+function getFileIcon(fileType) {
+    const icons = {
+        'pdf': 'bi-file-pdf',
+        'doc': 'bi-file-word',
+        'docx': 'bi-file-word',
+        'xls': 'bi-file-excel',
+        'xlsx': 'bi-file-excel',
+        'jpg': 'bi-file-image',
+        'jpeg': 'bi-file-image',
+        'png': 'bi-file-image',
+        'txt': 'bi-file-text'
+    };
+    return icons[fileType] || 'bi-file-earmark';
+}
+
+// Upload form handler for service documents
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('uploadServiceDocumentForm');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('serviceDocFile');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                Swal.fire('Error', 'Please select a file', 'error');
+                return;
+            }
+            
+            const formData = new FormData(uploadForm);
+            
+            const progressDiv = document.getElementById('serviceUploadProgress');
+            const progressBar = document.getElementById('serviceUploadProgressBar');
+            
+            if (progressDiv) progressDiv.style.display = 'block';
+            if (progressBar) {
+                progressBar.style.width = '30%';
+                progressBar.textContent = '30%';
+            }
+            
+            try {
+                const response = await fetch('/api/documents/upload', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                        progressBar.textContent = '100%';
+                    }
+                    
+                    Swal.fire('Success!', 'Document uploaded successfully', 'success');
+                    
+                    // Reset form
+                    uploadForm.reset();
+                    if (document.getElementById('serviceDocName')) document.getElementById('serviceDocName').value = '';
+                    if (document.getElementById('serviceDocDescription')) document.getElementById('serviceDocDescription').value = '';
+                    
+                    // Switch to documents tab
+                    const firstTab = document.querySelector('#serviceDocumentModal .nav-tabs button:first-child');
+                    if (firstTab) {
+                        const bsTab = new bootstrap.Tab(firstTab);
+                        bsTab.show();
+                    }
+                    
+                    // Reload documents
+                    if (currentServiceItemId) {
+                        loadServiceDocuments(currentServiceItemId);
+                    }
+                } else {
+                    Swal.fire('Error', result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', error.message, 'error');
+            } finally {
+                setTimeout(() => {
+                    if (progressDiv) progressDiv.style.display = 'none';
+                    if (progressBar) {
+                        progressBar.style.width = '0%';
+                        progressBar.textContent = '0%';
+                    }
+                }, 1000);
+            }
+        });
+    }
+});
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>

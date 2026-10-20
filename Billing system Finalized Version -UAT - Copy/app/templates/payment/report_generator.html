@@ -1,0 +1,628 @@
+{% extends "base.html" %}
+
+{% block title %}Report Generator - Payment Team{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --accent-purple: #7C3AED;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .config-card {
+        border-radius: 28px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    
+    .preview-card {
+        border-radius: 28px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    
+    .card-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--navy-deep);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--navy-mid);
+        box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+        outline: none;
+    }
+    
+    .btn-primary {
+        background: var(--bg-active);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 8px 24px;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        background: var(--navy-light);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+    }
+    
+    .btn-outline-secondary {
+        border-radius: var(--border-radius-pill);
+        padding: 8px 24px;
+    }
+    
+    .btn-success {
+        background: var(--accent-success);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 8px 24px;
+        transition: all 0.2s;
+    }
+    .btn-success:hover {
+        background: #047857;
+        transform: translateY(-1px);
+    }
+    
+    .btn-info {
+        background: var(--accent-info);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 8px 24px;
+        transition: all 0.2s;
+    }
+    .btn-info:hover {
+        background: #1E6A8A;
+        transform: translateY(-1px);
+    }
+    
+    .table {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: var(--navy-deep);
+        color: white;
+        border-bottom: none;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+        padding: 0.75rem;
+    }
+    
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    
+    .table tfoot {
+        background-color: #F8FAFE;
+        font-weight: 600;
+        border-top: 2px solid #E2E8F0;
+    }
+    
+    .amount-cb { color: #059669; font-weight: 600; }
+    .amount-sb { color: #D97706; font-weight: 600; }
+    .amount-lolc { color: #7C3AED; font-weight: 600; }
+    
+    .summary-card {
+        background: #F8FAFE;
+        border-radius: 20px;
+        border: 1px solid #E2E8F0;
+    }
+    
+    .stats-badge {
+        background: white;
+        border-radius: 40px;
+        padding: 6px 14px;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    
+    #reportPreview {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .dashboard-header-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="dashboard-header-icon">
+                    <i class="bi bi-file-earmark-spreadsheet fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">Report Generator</h1>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('payment.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Report Configuration Card -->
+    <div class="card config-card mb-4" data-aos="fade-up">
+        <div class="card-header-custom text-white">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-sliders fs-5"></i>
+                <h5 class="mb-0 fw-semibold">Report Configuration</h5>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <form id="filterForm" class="row g-4">
+                <div class="col-md-5">
+                    <label class="form-label"><i class="bi bi-calendar me-1"></i> Date From</label>
+                    <input type="date" id="dateFrom" class="form-control">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label"><i class="bi bi-calendar me-1"></i> Date To</label>
+                    <input type="date" id="dateTo" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label"><i class="bi bi-building me-1"></i> Company</label>
+                    <select id="companyFilter" class="form-select">
+                        <option value="">All Companies</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+            
+            <div class="d-flex flex-wrap gap-3 mt-4 pt-2">
+                <button class="btn btn-primary shadow-sm px-4" onclick="previewReport()">
+                    <i class="bi bi-search me-2"></i> Preview Report
+                </button>
+                <button class="btn btn-outline-secondary px-4" onclick="resetFilters()">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i> Reset
+                </button>
+                <div class="ms-auto d-flex gap-2">
+                    <button class="btn btn-success px-4" onclick="exportReport('excel')">
+                        <i class="bi bi-file-excel me-2"></i> Export Excel
+                    </button>
+                    <button class="btn btn-info px-4" onclick="exportReport('csv')">
+                        <i class="bi bi-file-spreadsheet me-2"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Card -->
+    <div class="card preview-card" id="previewCard" style="display: none;" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-header-custom text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-table fs-5"></i>
+                <h5 class="mb-0 fw-semibold">Data Preview</h5>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="stats-badge bg-white text-dark">
+                    <i class="bi bi-file-text me-1"></i> <span id="recordCount">0 records</span>
+                </span>
+                <span class="stats-badge bg-white text-dark">
+                    <i class="bi bi-cash-stack me-1"></i> <span id="totalAmount">Total: Rs 0.00</span>
+                </span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div id="reportPreview">
+                <div class="text-center py-5">
+                    <i class="bi bi-arrow-up-circle fs-1 text-muted"></i>
+                    <p class="mt-3 text-muted">Click "Preview Report" to view data</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+let currentPreviewData = null;
+
+function formatCurrency(amount) {
+    return parseFloat(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function previewReport() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const companyId = document.getElementById('companyFilter').value;
+    const previewCard = document.getElementById('previewCard');
+    
+    if (!dateFrom || !dateTo) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Warning',
+            text: 'Please select a date range',
+            confirmButtonColor: '#D97706'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Loading Preview...',
+        text: 'Please wait while we fetch your data',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    try {
+        // Use LOLC-specific preview endpoint
+        let url = `/api/reports/lolc-preview?from=${dateFrom}&to=${dateTo}`;
+        if (companyId) {
+            url += `&company_id=${companyId}`;
+        }
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        // Check if response is OK
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', response.status, errorText.substring(0, 200));
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: `Server error: ${response.status}`,
+                confirmButtonColor: '#DC2626'
+            });
+            return;
+        }
+        
+        const result = await response.json();
+        
+        Swal.close();
+        
+        if (result.success) {
+            currentPreviewData = result.data;
+            displayPreview(result.data);
+            previewCard.style.display = 'block';
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.error || 'Failed to load preview',
+                confirmButtonColor: '#DC2626'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            confirmButtonColor: '#DC2626'
+        });
+    }
+}
+
+function resetFilters() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('companyFilter').value = '';
+    document.getElementById('previewCard').style.display = 'none';
+    currentPreviewData = null;
+}
+
+function displayPreview(data) {
+    const container = document.getElementById('reportPreview');
+    const recordCountEl = document.getElementById('recordCount');
+    const totalAmountEl = document.getElementById('totalAmount');
+    let html = '';
+    
+    if (!data.records || data.records.length === 0) {
+        html = `
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="mt-3 text-muted">No records found for the selected criteria</p>
+                <small class="text-muted">Try adjusting your search filters</small>
+            </div>
+        `;
+        container.innerHTML = html;
+        recordCountEl.textContent = '0 records';
+        totalAmountEl.textContent = 'Total: Rs 0.00';
+        return;
+    }
+    
+    // Update stats
+    recordCountEl.textContent = `${data.records.length} records`;
+    totalAmountEl.textContent = `Total: Rs ${formatCurrency(data.totals?.grand_total || 0)}`;
+    
+    // Build main table with detailed columns
+    html = `
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Date</th>
+                        <th>Company</th>
+                        <th>BU User</th>
+                        <th>Unit</th>
+                        <th>Description</th>
+                        <th class="text-end">LOIT CB (Rs)</th>
+                        <th class="text-end">LOIT SB (Rs)</th>
+                        <th class="text-end">LOIT Total (Rs)</th>
+                        <th class="text-end">Showback (Rs)</th>
+                        <th class="text-end pe-4">Grand Total (Rs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    data.records.forEach(record => {
+        html += `
+            <tr>
+                <td class="ps-4 text-nowrap">${record.date || '-'}</div>
+                <td><strong>${escapeHtml(record.company_name || '-')}</strong></div>
+                <td>${escapeHtml(record.bu_user || '-')}<br><small class="text-muted">${escapeHtml(record.employee_id || '')}</small></div>
+                <td>${escapeHtml(record.team || '-')}</div>
+                <td style="word-wrap: break-word; max-width: 250px;">${escapeHtml(record.description || '-')}</div>
+                <td class="text-end amount-cb">${formatCurrency(record.loit_cb || 0)}</div>
+                <td class="text-end amount-sb">${formatCurrency(record.loit_sb || 0)}</div>
+                <td class="text-end fw-bold">${formatCurrency(record.loit_total || 0)}</div>
+                <td class="text-end amount-lolc">${formatCurrency(record.lolc_sb || 0)}</div>
+                <td class="text-end fw-bold text-primary pe-4">${formatCurrency(record.grand_total || 0)}</div>
+             </div>
+        `;
+    });
+    
+    // Totals row
+    html += `
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="ps-4 fw-bold">GRAND TOTAL:</div>
+                        <td class="text-end fw-bold amount-cb">${formatCurrency(data.totals?.loit_cb || 0)}</div>
+                        <td class="text-end fw-bold amount-sb">${formatCurrency(data.totals?.loit_sb || 0)}</div>
+                        <td class="text-end fw-bold">${formatCurrency(data.totals?.loit_total || 0)}</div>
+                        <td class="text-end fw-bold amount-lolc">${formatCurrency(data.totals?.lolc_sb || 0)}</div>
+                        <td class="text-end fw-bold text-primary pe-4">${formatCurrency(data.totals?.grand_total || 0)}</div>
+                     </div>
+                </tfoot>
+            </div>
+        </div>
+    `;
+    
+    // Add summary section by company
+    if (data.summary && Object.keys(data.summary).length > 0) {
+        html += `
+            <div class="summary-card m-4">
+                <div class="p-4">
+                    <h6 class="fw-semibold mb-3"><i class="bi bi-pie-chart me-2 text-primary"></i>Summary by Company</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless">
+                            <thead class="border-bottom">
+                                <tr>
+                                    <th class="ps-0">Company</th>
+                                    <th class="text-center">Services</th>
+                                    <th class="text-end">LOIT CB (Rs)</th>
+                                    <th class="text-end">LOIT SB (Rs)</th>
+                                    <th class="text-end">LOIT Total (Rs)</th>
+                                    <th class="text-end">Showback (Rs)</th>
+                                    <th class="text-end pe-0">Grand Total (Rs)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+        
+        for (const [company, stats] of Object.entries(data.summary)) {
+            html += `
+                <tr>
+                    <td class="ps-0 fw-semibold">${escapeHtml(company)}</div>
+                    <td class="text-center">${stats.count} service(s)</div>
+                    <td class="text-end amount-cb">${formatCurrency(stats.loit_cb || 0)}</div>
+                    <td class="text-end amount-sb">${formatCurrency(stats.loit_sb || 0)}</div>
+                    <td class="text-end fw-bold">${formatCurrency(stats.loit_total || 0)}</div>
+                    <td class="text-end amount-lolc">${formatCurrency(stats.lolc_sb || 0)}</div>
+                    <td class="text-end fw-bold text-primary pe-0">${formatCurrency(stats.grand_total || 0)}</div>
+                 </div>
+            `;
+        }
+        
+        html += `
+                            </tbody>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+async function exportReport(format) {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const companyId = document.getElementById('companyFilter').value;
+    
+    if (!dateFrom || !dateTo) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Warning',
+            text: 'Please select a date range',
+            confirmButtonColor: '#D97706'
+        });
+        return;
+    }
+
+    // Show loading indicator
+    Swal.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we create your report',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        // Use LOLC-specific export endpoint
+        let url = `/api/reports/lolc-export?format=${format}&from=${dateFrom}&to=${dateTo}`;
+        if (companyId) {
+            url += `&company_id=${companyId}`;
+        }
+        
+        // Use fetch to check response before downloading
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        // Check if response is JSON (error) or file
+        const contentType = response.headers.get('Content-Type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            // It's an error response
+            const errorData = await response.json();
+            Swal.fire({
+                icon: 'error',
+                title: 'Export Failed',
+                text: errorData.error || 'Failed to generate report',
+                confirmButtonColor: '#DC2626'
+            });
+        } else if (response.ok) {
+            // It's a file - download it
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            
+            // Get filename from Content-Disposition header or generate one
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `service_report_${format === 'excel' ? 'xlsx' : 'csv'}`;
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (match && match[1]) {
+                    filename = match[1].replace(/['"]/g, '');
+                }
+            }
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(downloadUrl);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Report has been downloaded',
+                timer: 2000,
+                showConfirmButton: false,
+                timerProgressBar: true
+            });
+        } else {
+            // Other HTTP error
+            const errorText = await response.text();
+            Swal.fire({
+                icon: 'error',
+                title: 'Export Failed',
+                text: `Server error: ${response.status}`,
+                confirmButtonColor: '#DC2626'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to generate report',
+            confirmButtonColor: '#DC2626'
+        });
+    }
+}
+
+// Set default date range (last 30 days)
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+    document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

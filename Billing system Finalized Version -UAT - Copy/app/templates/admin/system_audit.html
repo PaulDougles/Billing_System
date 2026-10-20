@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+
+{% block title %}System Audit Logs - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .alert.alert-dismissible, .alert.alert-success, .alert.alert-danger, .alert-info {
+        display: none !important;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 24px;
+        transition: all 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(10, 37, 64, 0.12);
+    }
+    
+    .bg-gradient-primary {
+        background: var(--bg-active) !important;
+    }
+    
+    .btn-primary {
+        background: var(--bg-active);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 8px 24px;
+    }
+    
+    .btn-primary:hover {
+        background: var(--navy-light);
+        transform: translateY(-1px);
+    }
+    
+    .btn-outline-primary {
+        border-color: var(--navy-mid);
+        color: var(--navy-mid);
+        border-radius: var(--border-radius-pill);
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--navy-mid);
+        border-color: var(--navy-mid);
+        color: white;
+    }
+    
+    .btn-secondary {
+        border-radius: var(--border-radius-pill);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--navy-mid);
+        box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: #f8f9fa;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+    
+    details pre {
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 4px;
+        margin-top: 4px;
+        font-size: 0.75rem;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: var(--navy-mid);
+        border-color: var(--navy-mid);
+    }
+    
+    .pagination .page-link {
+        color: var(--navy-mid);
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    
+    .pagination .page-link:hover {
+        background: var(--navy-mid);
+        color: white;
+    }
+    
+    .badge-status-success {
+        background: #D1FAE5;
+        color: #065F46;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .badge-status-failed {
+        background: #FEE2E2;
+        color: #991B1B;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .action-badge {
+        font-family: 'Courier New', monospace;
+        font-size: 0.7rem;
+    }
+    
+    .timestamp-text {
+        font-family: 'Courier New', monospace;
+        font-size: 0.8rem;
+    }
+    
+    .card-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: 20px 20px 0 0 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-journal-text fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">System Audit Logs</h1>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('admin.export_system_audit') }}" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="bi bi-download me-2"></i> Export CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="row g-3 mb-4" data-aos="fade-up">
+        <div class="col-md-3">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Total Logs</span>
+                    <h3 class="fw-bold mb-0">{{ audits.total }}</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-journal-bookmark-fill fs-4 text-primary"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Success Logs</span>
+                    <h3 class="fw-bold mb-0 text-success">{{ audits.items|selectattr('status', 'equalto', 'success')|list|length }}</h3>
+                </div>
+                <div class="bg-success bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-check-circle-fill fs-4 text-success"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Failed Logs</span>
+                    <h3 class="fw-bold mb-0 text-danger">{{ audits.items|rejectattr('status', 'equalto', 'success')|list|length }}</h3>
+                </div>
+                <div class="bg-danger bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 text-danger"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Unique Users</span>
+                    <h3 class="fw-bold mb-0">{{ audits.items|map(attribute='user_email')|select|unique|list|length }}</h3>
+                </div>
+                <div class="bg-info bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-people-fill fs-4 text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section p-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-funnel-fill text-primary"></i>
+            <h5 class="mb-0 fw-semibold">Filter Logs</h5>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-activity me-1"></i> Action Type</label>
+                <select id="filterAction" class="form-select">
+                    <option value="">All Actions</option>
+                    <option value="login_otp_success">📱 Login (OTP)</option>
+                    <option value="logout">🚪 Logout</option>
+                    <option value="user_created">👤 User Created</option>
+                    <option value="user_updated">✏️ User Updated</option>
+                    <option value="user_deleted">🗑️ User Deleted</option>
+                    <option value="user_status_changed">⚡ User Status Changed</option>
+                    <option value="company_created">🏢 Company Created</option>
+                    <option value="company_updated">✏️ Company Updated</option>
+                    <option value="company_status_changed">⚡ Company Status Changed</option>
+                    <option value="team_created">👥 Unit Created</option>
+                    <option value="team_updated">✏️ Unit Updated</option>
+                    <option value="team_status_changed">⚡ Unit Status Changed</option>
+                    <option value="resource_type_created">📦 Resource Type Created</option>
+                    <option value="resource_type_updated">✏️ Resource Type Updated</option>
+                    <option value="resource_type_status_changed">⚡ Resource Type Status Changed</option>
+                    <option value="report_generated">📊 Report Generated</option>
+                    <option value="invoice_generated">📄 Invoice Generated</option>
+                    
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-envelope me-1"></i> User Email</label>
+                <input type="text" id="filterUser" class="form-control" placeholder="user@example.com">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar me-1"></i> Date From</label>
+                <input type="date" id="filterDateFrom" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar me-1"></i> Date To</label>
+                <input type="date" id="filterDateTo" class="form-control">
+            </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary rounded-pill px-4" onclick="applyFilters()">
+                <i class="bi bi-search me-2"></i> Apply Filters
+            </button>
+            <button class="btn btn-outline-secondary rounded-pill px-4" onclick="clearFilters()">
+                <i class="bi bi-eraser me-2"></i> Clear All
+            </button>
+        </div>
+    </div>
+
+    <!-- Audit Table -->
+    <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="card-header-custom text-white border-0">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-table"></i>
+                <h5 class="mb-0 fw-semibold">Activity Logs</h5>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Timestamp</th>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                            <th>Category</th>
+                            <th>Target</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                            <th class="pe-4">IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        {% for audit in audits.items %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="timestamp-text">{{ audit.created_at.strftime('%Y-%m-%d') }}</div>
+                                <small class="text-muted">{{ audit.created_at.strftime('%H:%M:%S') }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ audit.user_email or 'System' }}</div>
+                                {% if audit.user_id %}
+                                <small class="text-muted">ID: {{ audit.user_id }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-25 text-dark rounded-pill px-3 py-1">
+                                    {{ audit.user_role or 'system' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ audit.action_type|replace('_', ' ')|title }}</div>
+                                {% if audit.error_message %}
+                                <small class="text-danger">{{ audit.error_message[:50] }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info bg-opacity-15 text-dark rounded-pill px-3 py-1">
+                                    <i class="bi bi-tag me-1"></i> {{ audit.action_category }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if audit.target_name %}
+                                <div class="fw-semibold">{{ audit.target_type|title if audit.target_type else 'N/A' }}</div>
+                                <small>{{ audit.target_name|truncate(30) }}</small>
+                                {% if audit.target_id %}
+                                <br><small class="text-muted">ID: {{ audit.target_id }}</small>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if audit.status == 'success' %}
+                                <span class="badge-status-success"><i class="bi bi-check-circle me-1"></i> Success</span>
+                                {% else %}
+                                <span class="badge-status-failed"><i class="bi bi-x-circle me-1"></i> Failed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if audit.details %}
+                                <details>
+                                    <summary class="text-primary" style="cursor: pointer;">
+                                        <small><i class="bi bi-eye"></i> View</small>
+                                    </summary>
+                                    <pre class="small mt-2 p-2 bg-light rounded" style="max-width: 250px; overflow-x: auto;">{{ audit.details|tojson(indent=2) }}</pre>
+                                </details>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4">
+                                <small class="font-monospace">{{ audit.ip_address or '-' }}</small>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-2 mb-0">No audit logs found</p>
+                                <small>Try adjusting your filters</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0 py-3 px-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="text-muted small">
+                    <i class="bi bi-info-circle me-1"></i> 
+                    Showing {{ audits.items|length }} of {{ audits.total }} logs
+                </div>
+                {% if audits.pages > 1 %}
+                <nav>
+                    <ul class="pagination mb-0">
+                        {% if audits.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.system_audit', page=audits.prev_num, action=request.args.get('action'), user=request.args.get('user'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page in audits.iter_pages() %}
+                            {% if page %}
+                            <li class="page-item {% if page == audits.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin.system_audit', page=page, action=request.args.get('action'), user=request.args.get('user'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}">{{ page }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if audits.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.system_audit', page=audits.next_num, action=request.args.get('action'), user=request.args.get('user'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function applyFilters() {
+    const action = document.getElementById('filterAction').value;
+    const user = document.getElementById('filterUser').value;
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo = document.getElementById('filterDateTo').value;
+    
+    let url = "{{ url_for('admin.system_audit') }}?";
+    if (action) url += `action=${encodeURIComponent(action)}&`;
+    if (user) url += `user=${encodeURIComponent(user)}&`;
+    if (dateFrom) url += `date_from=${dateFrom}&`;
+    if (dateTo) url += `date_to=${dateTo}&`;
+    
+    window.location.href = url;
+}
+
+function clearFilters() {
+    window.location.href = "{{ url_for('admin.system_audit') }}";
+}
+
+// Preserve filter values in the form when coming from pagination
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    const user = urlParams.get('user');
+    const dateFrom = urlParams.get('date_from');
+    const dateTo = urlParams.get('date_to');
+    
+    if (action) document.getElementById('filterAction').value = action;
+    if (user) document.getElementById('filterUser').value = user;
+    if (dateFrom) document.getElementById('filterDateFrom').value = dateFrom;
+    if (dateTo) document.getElementById('filterDateTo').value = dateTo;
+    
+    // Handle Flask Flash Messages
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+
+// Real-time UTC to local conversion for timestamps
+function convertAllTimestamps() {
+    document.querySelectorAll('.timestamp-text').forEach(el => {
+        const dateStr = el.innerText;
+        if (dateStr && dateStr.match(/\d{4}-\d{2}-\d{2}/)) {
+            const date = new Date(dateStr + 'T00:00:00');
+            if (!isNaN(date)) {
+                el.innerText = date.toLocaleDateString();
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

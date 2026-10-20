@@ -1,0 +1,662 @@
+{% extends "base.html" %}
+
+{% block title %}Unit Services - {{ unit.name }} | Record Assistant{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .user-card {
+        transition: all 0.2s ease;
+        border-radius: var(--border-radius-card);
+        overflow: hidden;
+    }
+    .user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(10, 37, 64, 0.12);
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: #f8f9fa;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        margin: 0 2px;
+        border-radius: var(--border-radius-pill);
+    }
+    
+    .btn-info {
+        background: var(--accent-info);
+        border: none;
+    }
+    .btn-info:hover {
+        background: #1E6A8A;
+        transform: translateY(-1px);
+    }
+    
+    .btn-outline-info {
+        border-color: var(--accent-info);
+        color: var(--accent-info);
+    }
+    .btn-outline-info:hover {
+        background: var(--accent-info);
+        border-color: var(--accent-info);
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-radius: var(--border-radius-pill);
+        padding: 6px 16px;
+    }
+    
+    .card-header-custom {
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .bg-gradient-info {
+        background: var(--bg-active) !important;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    .status-approved {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    .status-rejected {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+    
+    .read-only-badge {
+        background: #E0E7FF;
+        color: #3730A3;
+        padding: 4px 12px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .amount-cb { color: #059669; font-weight: 600; }
+    .amount-sb { color: #D97706; font-weight: 600; }
+    .amount-total { color: #1E3A5F; font-weight: 700; }
+    
+    .modal-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+
+    /* Description cell hover in modal table */
+    #serviceDetailsBody .desc-cell {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        word-break: break-word;
+        white-space: normal;
+    }
+    #serviceDetailsBody .desc-cell:hover {
+        background-color: #e8f0fe;
+    }
+
+    /* Resource column - can wrap */
+    #serviceDetailsBody .table td:nth-child(1) {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Description column - can wrap */
+    #serviceDetailsBody .table td:nth-child(2) {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Numeric columns - NO WRAP */
+    #serviceDetailsBody .table td:nth-child(3),
+    #serviceDetailsBody .table td:nth-child(4),
+    #serviceDetailsBody .table td:nth-child(5),
+    #serviceDetailsBody .table td:nth-child(6),
+    #serviceDetailsBody .table td:nth-child(7) {
+        white-space: nowrap;
+    }
+
+    /* Table headers - NO WRAP */
+    #serviceDetailsBody .table th {
+        white-space: nowrap;
+    }
+
+    /* Quantity badge styling */
+    .quantity-badge {
+        display: inline-block;
+        background: #E2E8F0;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="user-avatar" style="width: 48px; height: 48px;">
+                    <i class="bi bi-diagram-3 fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">{{ unit.name }}</h1>
+                    <p class="text-secondary-emphasis mt-1">
+                        Services with status: 
+                        <span class="status-badge status-{{ status }}">{{ status|title }}</span>
+                    </p>
+                </div>
+            </div>
+            <div class="mt-2">
+                <span class="read-only-badge">
+                    <i class="bi bi-eye me-1"></i> Read-Only View
+                </span>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4 me-2">
+                <i class="bi bi-arrow-left me-2"></i> Back
+            </a>
+            <a href="{{ url_for('record_assistant.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-house me-2"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- User Cards -->
+    {% for user in users %}
+    <div class="card user-card border-0 shadow-sm mb-4" id="user-{{ user.user_id }}" data-aos="fade-up">
+        <div class="card-header-custom bg-gradient-info text-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-avatar bg-opacity-20">
+                        <i class="bi bi-person-circle fs-4 text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-semibold">{{ user.user_name }}</h5>
+                        <small class="opacity-75">{{ user.employee_id }}</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-white text-dark rounded-pill px-3 py-1">
+                        <i class="bi bi-file-text me-1"></i> {{ user.services|length }} Services
+                    </span>
+                    <span class="badge bg-white text-dark rounded-pill px-3 py-1">
+                        <i class="bi bi-calculator me-1"></i> Rs {{ "{:,.2f}".format(user.total_amount) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Company</th>
+                            <th class="text-end">Chargeback Amount</th>
+                            <th class="text-end">LOIT Showback Amount</th>
+                            <th class="text-end">LOIT Total Amount</th>
+                            <th class="text-center pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in user.services %}
+                        <tr>
+                            <td class="text-nowrap">{{ service.submission_date.split(' ')[0] if service.submission_date else 'N/A' }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ service.company_name }}</div>
+                                
+                            </td>
+                            <td class="text-end amount-cb">Rs {{ "{:,.2f}".format(service.loit_chargeback|default(0)) }}</td>
+                            <td class="text-end amount-sb">Rs {{ "{:,.2f}".format(service.loit_showback|default(0)) }}</td>
+                            <td class="text-end amount-total fw-bold">Rs {{ "{:,.2f}".format((service.loit_chargeback|default(0)) + (service.loit_showback|default(0))) }}</td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group btn-group-sm gap-1">
+                                    <button class="btn btn-sm btn-outline-info rounded-pill" onclick="viewServiceDetails({{ service.id }})" title="View Details">
+                                        <i class="bi bi-eye"></i> Details
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="viewWorkflow({{ service.id }})" title="Workflow History">
+                                        <i class="bi bi-clock-history"></i> Workflow
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning rounded-pill" onclick="showDocumentModal({{ service.company_id }}, {{ service.id }})" title="Documents">
+                                        <i class="bi bi-folder2"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-4"></i>
+                                <p class="mb-0 mt-1">No services for this user</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if user.services %}
+                    <tfoot class="tfoot-total">
+                        <tr>
+                            <td colspan="2" class="fw-bold ps-4">Unit Subtotal:</td>
+                            <td class="text-end amount-cb">Rs {{ "{:,.2f}".format(user.total_chargeback|default(0)) }}</td>
+                            <td class="text-end amount-sb">Rs {{ "{:,.2f}".format(user.total_showback|default(0)) }}</td>
+                            <td class="text-end amount-total fw-bold">Rs {{ "{:,.2f}".format(user.total_amount) }}</td>
+                            <td class="pe-4"></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm rounded-4 text-center py-5" data-aos="fade-up">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="mt-3 mb-0">No services with status "{{ status }}" for {{ unit.name }}</p>
+        <small class="text-muted">Try checking other status tabs</small>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Service Details Modal -->
+<div class="modal fade" id="serviceDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header-custom text-white border-0 p-4">
+                <h5 class="modal-title fw-semibold"><i class="bi bi-file-text me-2"></i>Service Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="serviceDetailsBody" style="max-height: 70vh; overflow-y: auto;">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary rounded-pill px-4" onclick="viewWorkflowFromModal()">
+                    <i class="bi bi-clock-history me-2"></i> View Workflow
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// ========== HELPER FUNCTIONS ==========
+function formatCurrency(value) {
+    if (value === undefined || value === null) return '0.00';
+    return parseFloat(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ========== STATUS CHECK ==========
+const currentStatus = "{{ status }}";
+
+// ========== GLOBAL MAP FOR DESCRIPTION POPUP ==========
+window._resDescMap = {};
+
+// ========== DESCRIPTION POPUP FUNCTION ==========
+function showDescriptionPopup(resKey) {
+    const entry = window._resDescMap[resKey];
+    if (!entry) return;
+
+    Swal.fire({
+        title: '<i class="bi bi-file-text me-2"></i> ' + escapeHtml(entry.name),
+        html: `<div style="text-align: left; max-height: 400px; overflow-y: auto;">
+                    <strong>Description:</strong><br>
+                    <div class="mt-2 p-3 bg-light rounded" style="word-break: break-word; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                        ${escapeHtml(entry.description)}
+                    </div>
+               </div>`,
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#1E3A5F',
+        width: '600px'
+    });
+}
+
+// ========== VIEW DETAILS & WORKFLOW ==========
+let currentServiceId = null;
+
+async function viewServiceDetails(serviceId) {
+    currentServiceId = serviceId;
+    const modalBody = document.getElementById('serviceDetailsBody');
+    modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p>Loading...</p></div>';
+    const modal = new bootstrap.Modal(document.getElementById('serviceDetailsModal'));
+    modal.show();
+    
+    // Set modal to XL size
+    const modalDialog = document.querySelector('#serviceDetailsModal .modal-dialog');
+    if (modalDialog) {
+        modalDialog.classList.add('modal-xl');
+        modalDialog.style.maxWidth = '95%';
+        modalDialog.style.width = '1300px';
+    }
+    
+    try {
+        const response = await fetch(`/api/service-items/${serviceId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const item = result.service_item;
+            let resourcesHtml = '';
+            let totalLoitChargeback = 0;
+            let totalLoitShowback = 0;
+            let totalLolcShowback = 0;
+            
+            // Build resources table
+            if (item.resources && item.resources.length > 0) {
+                resourcesHtml = `
+                    <div class="mt-4">
+                        <h6 class="fw-semibold"><i class="bi bi-box-seam me-2 text-primary"></i>Resource Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered" style="min-width: 1100px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 15%;">Resource</th>
+                                        <th style="width: 25%;">Description</th>
+                                        <th style="width: 8%;" class="text-center">Quantity</th>
+                                        <th style="width: 10%;" class="text-end">LOIT CB Rate</th>
+                                        <th style="width: 12%;" class="text-end">LOIT CB Amount</th>
+                                        <th style="width: 10%;" class="text-end">LOIT SB Rate</th>
+                                        <th style="width: 12%;" class="text-end">LOIT SB Amount</th>
+                                        <th style="width: 10%;" class="text-end">Showback Rate</th>
+                                        <th style="width: 12%;" class="text-end">Showback Amount</th>
+                                        <th style="width: 8%;" class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                let resourceIndex = 0;
+                
+                for (const r of item.resources) {
+                    const qty = r.quantity || r.hours || 0;
+                    const uom = r.uom || 'units';
+                    
+                    const loitChargebackRate = r.loit_chargeback_rate || r.chargeback_rate || 0;
+                    const loitShowbackRate = r.loit_showback_rate || 0;
+                    const lolcShowbackRate = r.lolc_showback_rate || r.showback_rate || 0;
+                    
+                    const loitChargebackAmount = qty * loitChargebackRate;
+                    const loitShowbackAmount = qty * loitShowbackRate;
+                    const lolcShowbackAmount = qty * lolcShowbackRate;
+                    const totalAmount = loitChargebackAmount + loitShowbackAmount + lolcShowbackAmount;
+                    
+                    totalLoitChargeback += loitChargebackAmount;
+                    totalLoitShowback += loitShowbackAmount;
+                    totalLolcShowback += lolcShowbackAmount;
+                    
+                    const resourceName = r.name || '';
+                    const descriptionText = r.description || item.description || '';
+                    
+                    // Store full description in JS map
+                    const resKey = `res_${serviceId}_${resourceIndex}`;
+                    window._resDescMap[resKey] = {
+                        name: resourceName,
+                        description: descriptionText
+                    };
+                    resourceIndex++;
+                    
+                    const shortDescription = descriptionText.length > 50 
+                        ? descriptionText.substring(0, 47) + '...' 
+                        : descriptionText;
+                    
+                    const shortName = resourceName.length > 25 
+                        ? resourceName.substring(0, 22) + '...' 
+                        : resourceName;
+                    
+                    resourcesHtml += `
+                        <tr>
+                            <td style="word-break: break-word; white-space: normal;">
+                                <strong title="${escapeHtml(resourceName)}">${escapeHtml(shortName)}</strong>
+                            </td>
+                            <td class="desc-cell" 
+                                title="Click to view full description" 
+                                onclick="showDescriptionPopup('${resKey}')"
+                                style="cursor: pointer; word-break: break-word; white-space: normal;">
+                                <i class="bi bi-file-text me-1 text-info"></i>${escapeHtml(shortDescription)}
+                                ${descriptionText.length > 50 ? '<span class="text-primary small ms-1"><i class="bi bi-eye"></i> click</span>' : ''}
+                            </td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <span class="quantity-badge">${qty} ${escapeHtml(uom)}</span>
+                            </td>
+                            <td class="text-end" style="white-space: nowrap;">${formatCurrency(loitChargebackRate)}</td>
+                            <td class="text-end amount-cb" style="white-space: nowrap;">${formatCurrency(loitChargebackAmount)}</td>
+                            <td class="text-end" style="white-space: nowrap;">${formatCurrency(loitShowbackRate)}</td>
+                            <td class="text-end amount-sb" style="white-space: nowrap;">${formatCurrency(loitShowbackAmount)}</td>
+                            <td class="text-end" style="white-space: nowrap;">${formatCurrency(lolcShowbackRate)}</td>
+                            <td class="text-end amount-lolc" style="white-space: nowrap;">${formatCurrency(lolcShowbackAmount)}</td>
+                            <td class="text-end fw-bold text-primary" style="white-space: nowrap;">${formatCurrency(totalAmount)}</td>
+                        </tr>
+                    `;
+                }
+                
+                resourcesHtml += `
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Resource Totals:</td>
+                                        <td></td>
+                                        <td class="text-end fw-bold amount-cb">${formatCurrency(totalLoitChargeback)}</td>
+                                        <td></td>
+                                        <td class="text-end fw-bold amount-sb">${formatCurrency(totalLoitShowback)}</td>
+                                        <td></td>
+                                        <td class="text-end fw-bold amount-lolc">${formatCurrency(totalLolcShowback)}</td>
+                                        <td class="text-end fw-bold text-primary">${formatCurrency(totalLoitChargeback + totalLoitShowback + totalLolcShowback)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resourcesHtml = '<div class="alert alert-info rounded-3 mt-3">No resources recorded.</div>';
+            }
+            
+            // Get totals from API or calculated values
+            const loitChargebackTotal = item.loit_chargeback_total || totalLoitChargeback || item.chargeback_total || 0;
+            const loitShowbackTotal = item.loit_showback_total || totalLoitShowback || 0;
+            const lolcShowbackTotal = item.lolc_showback_total || totalLolcShowback || item.showback_total || 0;
+            const loitTotal = loitChargebackTotal + loitShowbackTotal;
+            const grandTotal = loitTotal + lolcShowbackTotal;
+            
+            modalBody.innerHTML = `
+                <style>
+                    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+                    .info-item { background: #F8FAFE; border-radius: 12px; padding: 0.75rem 1rem; border-left: 3px solid #2C7DA0; }
+                    .info-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #64748B; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 5px; }
+                    .info-value { font-size: 0.95rem; font-weight: 600; color: #1E293B; }
+                    .amount-cb { color: #059669; font-weight: 600; }
+                    .amount-sb { color: #D97706; font-weight: 600; }
+                    .amount-lolc { color: #7C3AED; font-weight: 600; }
+                    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; }
+                    .status-approved { background: #D1FAE5; color: #065F46; }
+                    .status-pending { background: #FEF3C7; color: #92400E; }
+                    .status-rejected { background: #FEE2E2; color: #991B1B; }
+                </style>
+                
+                <!-- Service Information -->
+                <div class="card border-0 shadow-sm rounded-3 mb-3">
+                    <div class="card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-calendar"></i> Submission Date</div>
+                                <div class="info-value">${item.submission_date || 'N/A'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-building"></i> Company</div>
+                                <div class="info-value fw-semibold">${escapeHtml(item.company_name)}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-check-circle"></i> Status</div>
+                                <div class="info-value">
+                                    <span class="status-badge status-${item.head_approval_status === 'approved' ? 'approved' : (item.head_approval_status === 'rejected' ? 'rejected' : 'pending')}">
+                                        ${item.head_approval_status === 'approved' ? 'Approved' : (item.head_approval_status === 'rejected' ? 'Rejected' : 'Pending')}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="bi bi-person-badge"></i> BU User</div>
+                                <div class="info-value">${escapeHtml(item.bu_user?.full_name || 'Unknown')}<br><small class="text-muted">ID: ${escapeHtml(item.bu_user?.employee_id || 'N/A')}</small></div>
+                            </div>
+                        </div>
+                       
+                    </div>
+                </div>
+                
+                ${resourcesHtml}
+                
+                <!-- Financial Summary Cards -->
+                <div class="row mt-4 g-3">
+                    <div class="col-md-3">
+                        <div class="alert alert-success rounded-3 text-center py-2 mb-0">
+                            <small><i class="bi bi-cash-stack me-1"></i> LOIT Chargeback</small>
+                            <h5 class="mt-1 mb-0">${formatCurrency(loitChargebackTotal)}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert alert-warning rounded-3 text-center py-2 mb-0">
+                            <small><i class="bi bi-graph-up me-1"></i> LOIT Showback</small>
+                            <h5 class="mt-1 mb-0">${formatCurrency(loitShowbackTotal)}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert" style="background: #EDE9FE; border-color: #7C3AED; border-radius: 12px; text-align: center; padding: 0.5rem;">
+                            <small><i class="bi bi-building me-1"></i> Showback</small>
+                            <h5 class="mt-1 mb-0">${formatCurrency(lolcShowbackTotal)}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert alert-primary rounded-3 text-center py-2 mb-0">
+                            <small><i class="bi bi-calculator me-1"></i> LOIT Total</small>
+                            <h5 class="mt-1 mb-0">${formatCurrency(loitTotal)}</h5>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Grand Total -->
+                <div class="alert alert-secondary rounded-3 text-center mt-3 py-2">
+                    <small><i class="bi bi-receipt me-1"></i> GRAND TOTAL </small>
+                    <h5 class="mt-1 mb-0">${formatCurrency(grandTotal)}</h5>
+                </div>
+                
+                ${item.head_approval_comment ? `
+                <div class="alert alert-info rounded-3 mt-3">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    <strong>Head of IT Comment:</strong>
+                    <p class="mt-2 mb-0 small">${escapeHtml(item.head_approval_comment)}</p>
+                </div>
+                ` : ''}
+                
+                ${item.finance_approval_comment ? `
+                <div class="alert alert-info rounded-3 mt-3">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    <strong>Finance Controller Comment:</strong>
+                    <p class="mt-2 mb-0 small">${escapeHtml(item.finance_approval_comment)}</p>
+                </div>
+                ` : ''}
+            `;
+            
+            if (typeof convertUTCToLocal === 'function') convertUTCToLocal();
+            
+        } else {
+            modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details: ' + escapeHtml(result.error || 'Unknown error') + '</div>';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details. Please try again.</div>';
+    }
+}
+
+function viewWorkflow(serviceId) {
+    window.location.href = `/api/workflow/view/${serviceId}`;
+}
+
+function viewWorkflowFromModal() {
+    if (currentServiceId) {
+        window.location.href = `/api/workflow/view/${currentServiceId}`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof convertUTCToLocal === 'function') convertUTCToLocal();
+    
+    // Flash messages handling
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

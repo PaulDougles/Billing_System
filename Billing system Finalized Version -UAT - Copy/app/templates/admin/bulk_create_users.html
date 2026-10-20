@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Create Users - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-card {
+        border-radius: 28px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+    }
+    
+    .upload-header {
+        background: linear-gradient(135deg, #0A2540 0%, #1E3A5F 100%);
+        padding: 1.5rem;
+    }
+    
+    .drop-zone {
+        border: 2px dashed #CBD5E1;
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: #F8FAFE;
+    }
+    
+    .drop-zone:hover {
+        border-color: #1E4D6F;
+        background: #F0F7FF;
+    }
+    
+    .drop-zone.dragover {
+        border-color: #10B981;
+        background: #F0FDF4;
+    }
+    
+    .result-table {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .success-row {
+        background-color: #D1FAE5;
+    }
+    
+    .error-row {
+        background-color: #FEE2E2;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #0A2540 0%, #1E3A5F 100%);
+        border: none;
+        border-radius: 40px;
+        padding: 12px 28px;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(10, 37, 64, 0.3);
+    }
+    
+    .btn-outline-primary {
+        border-color: #1E4D6F;
+        color: #1E4D6F;
+        border-radius: 40px;
+    }
+    
+    .btn-outline-primary:hover {
+        background: #1E4D6F;
+        border-color: #1E4D6F;
+        color: white;
+    }
+    
+    .stats-card {
+        background: #F8FAFE;
+        border-radius: 16px;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-people-fill fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: #0B2B40;">Bulk Create Users</h1>
+                    <p class="text-secondary-emphasis mt-1">Upload multiple users at once using Excel/CSV</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Users
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="upload-card">
+                <div class="upload-header text-white">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-cloud-upload me-2"></i> Upload User File
+                    </h5>
+                    <small>Upload an Excel (.xlsx, .xls) or CSV file with user data</small>
+                </div>
+                <div class="p-4 p-lg-5">
+                    <!-- Download Template -->
+                    <div class="text-center mb-4">
+                        <a href="{{ url_for('admin.download_user_template') }}" class="btn btn-outline-primary rounded-pill px-4">
+                            <i class="bi bi-download me-2"></i> Download Excel Template
+                        </a>
+                    </div>
+                    
+                    <!-- Upload Form -->
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <div class="drop-zone" id="dropZone">
+                            <div id="dropZoneContent">
+                                <i class="bi bi-file-earmark-spreadsheet fs-1 text-muted"></i>
+                                <p class="mt-2 mb-1">Drag & drop your file here or click to browse</p>
+                                <small class="text-muted">Supported formats: .xlsx, .xls, .csv</small>
+                            </div>
+                            <input type="file" name="user_file" id="fileInput" class="d-none" accept=".xlsx,.xls,.csv">
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary w-100" id="uploadBtn" disabled>
+                                <i class="bi bi-cloud-upload me-2"></i> Upload & Create Users
+                            </button>
+                        </div>
+                    </form>
+                    
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Section -->
+    {% if created_users or errors %}
+    <div class="row mt-4">
+        <div class="col-lg-10 mx-auto">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-clipboard-data me-2 text-primary"></i> Upload Results
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Stats -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="stats-card text-center">
+                                <div class="text-success">
+                                    <i class="bi bi-check-circle-fill fs-3"></i>
+                                </div>
+                                <h3 class="fw-bold mb-0 text-success">{{ created_users|length }}</h3>
+                                <small class="text-muted">Users Created</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card text-center">
+                                <div class="text-danger">
+                                    <i class="bi bi-x-circle-fill fs-3"></i>
+                                </div>
+                                <h3 class="fw-bold mb-0 text-danger">{{ errors|length }}</h3>
+                                <small class="text-muted">Errors</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card text-center">
+                                <div class="text-primary">
+                                    <i class="bi bi-people-fill fs-3"></i>
+                                </div>
+                                <h3 class="fw-bold mb-0 text-primary">{{ created_users|length + errors|length }}</h3>
+                                <small class="text-muted">Total Processed</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Created Users List -->
+                    {% if created_users %}
+                    <h6 class="fw-bold mt-3 mb-2 text-success">
+                        <i class="bi bi-check-circle me-1"></i> Successfully Created Users
+                    </h6>
+                    <div class="table-responsive result-table">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Welcome Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in created_users %}
+                                <tr>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td><span class="badge bg-success">{{ user.role }}</span></td>
+                                    <td>
+                                        {% if user.email_status == 'Sent' %}
+                                        <span class="badge bg-success">Sent</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Errors List -->
+                    {% if errors %}
+                    <h6 class="fw-bold mt-3 mb-2 text-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Errors
+                    </h6>
+                    <div class="table-responsive result-table">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Error Message</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for error in errors %}
+                                <tr>
+                                    <td class="text-danger">{{ error }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-4 text-center">
+                        <a href="{{ url_for('admin.list_users') }}" class="btn btn-primary rounded-pill px-4">
+                            <i class="bi bi-people me-2"></i> View All Users
+                        </a>
+                        <a href="{{ url_for('admin.bulk_create_users') }}" class="btn btn-outline-primary rounded-pill px-4 ms-2">
+                            <i class="bi bi-arrow-repeat me-2"></i> Upload Another File
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const dropZoneContent = document.getElementById('dropZoneContent');
+    
+    // Click on drop zone to open file picker
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    function updateUI(fileName) {
+        uploadBtn.disabled = false;
+        dropZoneContent.innerHTML = `
+            <i class="bi bi-file-check fs-1 text-success"></i>
+            <p class="mt-2 mb-1 fw-semibold text-success">${fileName}</p>
+            <small class="text-muted">Click to change file</small>
+        `;
+    }
+
+    // File selected
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            updateUI(e.target.files[0].name);
+        }
+    });
+    
+    // Drag and drop handlers
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateUI(files[0].name);
+        }
+    });
+    
+    // Form submit loading state
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Processing...';
+    });
+    
+    // Flash messages
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E4D6F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</script>
+{% endblock %}

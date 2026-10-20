@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - {{ company.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .config-card {
+        border-radius: 28px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--navy-deep);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--navy-mid);
+        box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+        outline: none;
+    }
+    
+    .btn-outline-success {
+        border-color: var(--accent-success);
+        color: var(--accent-success);
+        border-radius: var(--border-radius-pill);
+    }
+    .btn-outline-success:hover {
+        background: var(--accent-success);
+        border-color: var(--accent-success);
+        color: white;
+    }
+    
+    .btn-outline-info {
+        border-color: var(--accent-info);
+        color: var(--accent-info);
+        border-radius: var(--border-radius-pill);
+    }
+    .btn-outline-info:hover {
+        background: var(--accent-info);
+        border-color: var(--accent-info);
+        color: white;
+    }
+    
+    .btn-primary {
+        background: var(--bg-active);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 12px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        background: var(--navy-light);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+    }
+    
+    .btn-secondary {
+        border-radius: var(--border-radius-pill);
+        padding: 8px 20px;
+    }
+    
+    .btn-success {
+        background: var(--accent-success);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 10px;
+        font-weight: 600;
+    }
+    .btn-success:hover {
+        background: #047857;
+    }
+    
+    .card-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .company-badge {
+        background: #F1F5F9;
+        border-radius: var(--border-radius-pill);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .resource-chip {
+        background: #F1F5F9;
+        padding: 4px 10px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        display: inline-block;
+        margin: 2px;
+    }
+    
+    .modal-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+        padding: 0.75rem;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    
+    .modal-xl {
+        max-width: 1200px;
+    }
+    
+    #reportPreviewContent {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .stats-bar {
+        background: #F8FAFE;
+        padding: 12px 16px;
+        border-radius: 16px;
+    }
+    
+    .dashboard-header-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="dashboard-header-icon">
+                    <i class="bi bi-file-text fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">Reports - {{ company.name }}</h1>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('payment.company_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center" data-aos="fade-up">
+        <div class="col-md-8">
+            <div class="config-card">
+                <div class="card-header-custom text-white">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-filter fs-5"></i>
+                        <h5 class="mb-0 fw-semibold">Report Filters</h5>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <form id="reportForm">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label"><i class="bi bi-calendar me-1"></i> Date From</label>
+                                <input type="date" id="dateFrom" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"><i class="bi bi-calendar me-1"></i> Date To</label>
+                                <input type="date" id="dateTo" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label"><i class="bi bi-building me-1"></i> Company</label>
+                            <div class="company-badge">
+                                <i class="bi bi-building fs-5 text-primary"></i>
+                                <strong class="flex-grow-1">{{ 'All Companies' if is_parent_payment_user else company.name }}</strong>
+                                <span class="badge bg-primary rounded-pill">Selected</span>
+                            </div>
+                            <input type="hidden" id="companyId" value="{{ '' if is_parent_payment_user else company.id }}">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Format</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="format" id="formatExcel" value="excel" checked>
+                                <label class="btn btn-outline-success rounded-pill me-2" for="formatExcel">
+                                    <i class="bi bi-file-excel me-1"></i> Excel (.xlsx)
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="format" id="formatCSV" value="csv">
+                                <label class="btn btn-outline-info rounded-pill" for="formatCSV">
+                                    <i class="bi bi-file-text me-1"></i> CSV
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="button" class="btn btn-primary w-100" onclick="previewReport()">
+                                <i class="bi bi-eye me-2"></i> Preview Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Preview Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header-custom text-white border-0">
+                <h5 class="modal-title fw-semibold"><i class="bi bi-table me-2"></i> Report Preview</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="reportPreviewContent" class="p-0">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Loading preview...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light p-4">
+                <div class="row w-100 g-3">
+                    <div class="col-md-6">
+                        <div class="stats-bar">
+                            <i class="bi bi-file-text me-1 text-primary"></i>
+                            <strong>Total Records: <span id="modalTotalRecords">0</span></strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stats-bar">
+                            <i class="bi bi-cash-stack me-1 text-success"></i>
+                            <strong>Total Amount: Rs <span id="modalPreviewTotal">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 w-100">
+                    <button class="btn btn-success w-100 rounded-pill py-2" onclick="exportReportFromModal()">
+                        <i class="bi bi-download me-2"></i> Export Report
+                    </button>
+                </div>
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 mt-3" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+let currentPreviewData = null;
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatCurrency(amount) {
+    return 'Rs ' + parseFloat(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Update the previewReport function
+async function previewReport() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    if (!dateFrom || !dateTo) {
+        Swal.fire('Warning', 'Please select a date range', 'warning');
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Loading Preview...',
+        text: 'Please wait while we fetch your data',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    try {
+        let url = `/api/reports/company-preview`;
+        const params = new URLSearchParams({
+            company_id: document.getElementById('companyId').value,
+            from: dateFrom,
+            to: dateTo
+        });
+        url += `?${params.toString()}`;
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        Swal.close();
+        
+        if (result.success) {
+            currentPreviewData = result.data;
+            displayPreviewInModal(result.data);
+            new bootstrap.Modal(document.getElementById('reportModal')).show();
+        } else {
+            Swal.fire('Error', result.error, 'error');
+        }
+    } catch (error) {
+        Swal.close();
+        Swal.fire('Error', error.message, 'error');
+    }
+}
+
+
+
+function displayPreviewInModal(data) {
+    const previewContent = document.getElementById('reportPreviewContent');
+    const totalRecords = document.getElementById('modalTotalRecords');
+    const previewTotal = document.getElementById('modalPreviewTotal');
+    
+    if (!data.records || data.records.length === 0) {
+        previewContent.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="mt-3 mb-0 text-muted">No records found for the selected period</p>
+                <small class="text-muted">Try adjusting your date range</small>
+            </div>
+        `;
+        totalRecords.textContent = '0';
+        previewTotal.textContent = '0.00';
+        return;
+    }
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Date</th>
+                        <th>BU User</th>
+                        <th>Unit</th>
+                        <th class="text-end">LOIT Total (Rs)</th>
+                        <th class="text-end">{{ company.showback_label }} (Rs)</th>
+                        <th class="text-end pe-4">Grand Total (Rs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    data.records.forEach(record => {
+        // Format date
+        let dateDisplay = record.date || 'N/A';
+        if (dateDisplay !== 'N/A' && dateDisplay.includes(' ')) {
+            dateDisplay = dateDisplay.split(' ')[0];
+        }
+        
+        // Calculate LOIT Total (LOIT CB + LOIT SB) from record data
+        const loitTotal = (record.loit_total) || ((record.loit_cb || 0) + (record.loit_sb || 0));
+        const lolcShowback = record.lolc_sb || 0;
+        const grandTotal = record.amount || loitTotal + lolcShowback;
+        
+        html += `
+            <tr>
+                <td class="ps-4 text-nowrap">${escapeHtml(dateDisplay)}</div>
+                <td>
+                    <div class="fw-semibold">${escapeHtml(record.bu_user || 'N/A')}</div>
+                    <small class="text-muted">${escapeHtml(record.employee_id || '')}</small>
+                    <div><small class="text-muted">${escapeHtml(record.company_name || '')}</small></div>
+                </div>
+                <td>${escapeHtml(record.team || 'N/A')}</div>
+                <td class="text-end fw-bold amount-loit">${formatCurrency(loitTotal)}</div>
+                <td class="text-end amount-lolc">${formatCurrency(lolcShowback)}</div>
+                <td class="text-end fw-bold text-primary pe-4">${formatCurrency(grandTotal)}</div>
+             </div>
+        `;
+    });
+    
+    // Calculate totals
+    let totalLoit = 0;
+    let totalLolc = 0;
+    let totalAmount = 0;
+    
+    data.records.forEach(record => {
+        const loitTotal = (record.loit_total) || ((record.loit_cb || 0) + (record.loit_sb || 0));
+        const lolcShowback = record.lolc_sb || 0;
+        const grandTotal = record.amount || loitTotal + lolcShowback;
+        
+        totalLoit += loitTotal;
+        totalLolc += lolcShowback;
+        totalAmount += grandTotal;
+    });
+    
+    html += `
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="3" class="ps-4 fw-bold">TOTAL:</div>
+                        <td class="text-end fw-bold amount-loit">${formatCurrency(totalLoit)}</div>
+                        <td class="text-end fw-bold amount-lolc">${formatCurrency(totalLolc)}</div>
+                        <td class="text-end fw-bold text-primary pe-4">${formatCurrency(totalAmount)}</div>
+                     </div>
+                </tfoot>
+            </div>
+        </div>
+    `;
+    
+    previewContent.innerHTML = html;
+    totalRecords.textContent = data.records.length;
+    previewTotal.textContent = formatCurrency(data.total_amount || totalAmount);
+}
+
+async function exportReportFromModal() {
+    if (!currentPreviewData) {
+        Swal.fire('Error', 'No preview data available', 'error');
+        return;
+    }
+    
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const format = document.querySelector('input[name="format"]:checked').value;
+    
+    let url = `/api/reports/company-export?format=${format}`;
+    url += `&company_id=${encodeURIComponent(document.getElementById('companyId').value)}`;
+    if (dateFrom) url += `&from=${dateFrom}`;
+    if (dateTo) url += `&to=${dateTo}`;
+    
+    window.location.href = url;
+}
+
+// Reset modal content when closed
+document.getElementById('reportModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('reportPreviewContent').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading preview...</p></div>';
+    currentPreviewData = null;
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Flash messages handling
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>{% block title %}Invoice System | Modern ERP{% endblock %}</title>
+    
+    <!-- Google Fonts + Font Awesome + Bootstrap Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- AOS Library for subtle scroll animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #0B2B40 0%, #1E4D6F 100%);
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 0px;
+            --card-radius: 24px;
+            --transition-smooth: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            --shadow-sm: 0 8px 20px rgba(0,0,0,0.03), 0 2px 6px rgba(0,0,0,0.05);
+            --shadow-md: 0 12px 28px rgba(0,0,0,0.08);
+            --glass-bg: rgba(255,255,255,0.75);
+            --border-light: 1px solid rgba(255,255,255,0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F0F4F8;
+            overflow-x: hidden;
+            color: #1A2C3E;
+        }
+
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #E9ECEF;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8CA3B9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5D7A9A;
+        }
+
+        /* Wrapper & Sidebar */
+        .wrapper {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary-gradient);
+            backdrop-filter: blur(2px);
+            transition: var(--transition-smooth);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1050;
+            overflow-y: auto;
+            transform: translateX(0);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.12);
+            border-right: var(--border-light);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        /* Content Wrapper */
+        .content-wrapper {
+            flex: 1;
+            background: #F0F4F8;
+            min-height: 100vh;
+            transition: margin-left 0.35s ease;
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-wrapper.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* Premium Toggle Button */
+        .sidebar-toggle {
+            position: fixed;
+            left: calc(var(--sidebar-width) + 16px);
+            top: 24px;
+            z-index: 1060;
+            background: white;
+            color: #1E4D6F;
+            border: none;
+            border-radius: 40px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(4px);
+            background: rgba(255,255,255,0.96);
+        }
+
+        .sidebar-toggle:hover {
+            background: #1E4D6F;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .sidebar.collapsed ~ .sidebar-toggle {
+            left: 24px;
+        }
+
+        /* Sidebar Nav Elegance */
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.85);
+            padding: 0.8rem 1.2rem;
+            margin: 0.3rem 0.8rem;
+            border-radius: 16px;
+            transition: all 0.25s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: -0.2px;
+        }
+
+        .sidebar .nav-link i, 
+        .sidebar .nav-link .bi {
+            margin-right: 14px;
+            font-size: 1.25rem;
+            vertical-align: middle;
+        }
+
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            transform: translateX(6px);
+            backdrop-filter: blur(8px);
+        }
+
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.22);
+            color: white;
+            border-left: 3px solid #FFD966;
+            font-weight: 600;
+        }
+
+        /* User Card Inside Sidebar */
+        .user-card-side {
+            background: rgba(255,255,255,0.12);
+            border-radius: 28px;
+            padding: 14px;
+            margin-bottom: 18px;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Main Content Inner */
+        .content-wrapper .container-fluid {
+            padding: 80px 32px 40px 80px;
+        }
+
+        /* Cards / Dashboard modules */
+        .modern-card {
+            background: white;
+            border-radius: var(--card-radius);
+            border: none;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+        }
+
+        .modern-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-modern {
+            background: linear-gradient(105deg, #1E4D6F, #0F3B56);
+            border: none;
+            border-radius: 40px;
+            padding: 8px 24px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .btn-modern:hover {
+            transform: scale(1.02);
+            background: linear-gradient(105deg, #256f98, #13415b);
+            box-shadow: 0 6px 14px rgba(30,77,111,0.3);
+        }
+
+        .btn-outline-modern {
+            border-radius: 40px;
+            border: 1px solid #CBD5E1;
+            background: white;
+            color: #1E4D6F;
+            transition: all 0.2s;
+        }
+
+        .btn-outline-modern:hover {
+            background: #EFF6FF;
+            border-color: #1E4D6F;
+        }
+
+        .progress {
+            height: 32px;
+            border-radius: 40px;
+            background: #E9ECEF;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .progress-bar {
+            border-radius: 40px;
+            background: linear-gradient(90deg, #2A7F6E, #3D9C8A);
+            font-weight: 600;
+            line-height: 32px;
+        }
+
+        /* Alert Enhancements */
+        .alert {
+            border-radius: 20px;
+            border-left: 5px solid;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Responsivity */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar:not(.collapsed) {
+                transform: translateX(0);
+            }
+            .content-wrapper {
+                margin-left: 0;
+                width: 100%;
+            }
+            .sidebar-toggle {
+                left: 20px;
+            }
+            .content-wrapper .container-fluid {
+                padding: 70px 20px 25px 20px;
+            }
+        }
+
+        /* badge modern */
+        .badge-modern {
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-weight: 500;
+            letter-spacing: -0.2px;
+        }
+
+        /* glass modal header */
+        .modal-header {
+            background: linear-gradient(95deg, #0B2B40, #1A4A6F);
+            color: white;
+            border-bottom: none;
+        }
+        .modal-content {
+            border-radius: 28px;
+            border: none;
+            overflow: hidden;
+        }
+
+        /* Document list items */
+        .doc-item {
+            background: #F9FBFD;
+            border-radius: 20px;
+            transition: all 0.2s;
+            border: 1px solid #EFF3F8;
+        }
+        .doc-item:hover {
+            background: white;
+            border-color: #CFE2F0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        /* fade in */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(12px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .main-content {
+            animation: fadeSlideUp 0.4s ease-out;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar - modern glass morphism -->
+        <nav class="sidebar" id="sidebar">
+            <div class="p-3">
+                <div class="text-center mb-4 mt-2">
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-receipt fs-1 text-white"></i>
+                        <h3 class="text-white fw-semibold mb-0">Invoice<span class="fw-light">System</span></h3>
+                    </div>
+                    <span class="badge bg-warning text-dark mt-2 px-3 py-1 rounded-pill">Version 1.0</span>
+                </div>
+                
+                {% if current_user.is_authenticated %}
+                <!-- User Card with Role Display -->
+                <div class="user-card-side text-white mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white bg-opacity-25 rounded-circle p-2">
+                            <i class="bi bi-person-fill fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ current_user.full_name }}</div>
+                            
+                            <!-- Show current active role -->
+                            {% set active_role = session.get('active_role', current_user.role) %}
+                            {% if active_role != current_user.role %}
+                                <div>
+                                    <small class="text-white-50">{{ current_user.role|title }}</small>
+                                    <span class="badge bg-warning text-dark ms-1">
+                                        → {{ active_role|title }} Mode
+                                    </span>
+                                </div>
+                            {% else %}
+                                <small class="text-white-50">{{ current_user.role|replace('_', ' ')|title }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="bg-white opacity-25">
+                
+                <!-- ========== NAVIGATION MENU BASED ON ACTIVE ROLE ========== -->
+                {% set active_role = session.get('active_role', current_user.role) %}
+
+                <!-- ========== ADMIN MENU (Regular Admin ONLY - NO Super Admin) ========== -->
+                {% if active_role == 'admin' or current_user.role == 'admin' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" 
+                           href="{{ url_for('dashboard.index') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.list_users' %}active{% endif %}" 
+                           href="{{ url_for('admin.list_users') }}">
+                            <i class="bi bi-people"></i> Manage Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.manage_units' %}active{% endif %}" 
+                           href="{{ url_for('admin.manage_units') }}">
+                            <i class="bi bi-diagram-3"></i> Manage Units
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.manage_companies' %}active{% endif %}" 
+                           href="{{ url_for('admin.manage_companies') }}">
+                            <i class="bi bi-building"></i> Manage Companies
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.manage_resource_types' %}active{% endif %}" 
+                           href="{{ url_for('admin.manage_resource_types') }}">
+                            <i class="bi bi-tags"></i> Resource Types
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.system_audit' %}active{% endif %}" 
+                           href="{{ url_for('admin.system_audit') }}">
+                            <i class="bi bi-journal-text"></i> Audit Logs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.system_settings' %}active{% endif %}" 
+                           href="{{ url_for('admin.system_settings') }}">
+                            <i class="bi bi-gear"></i> System Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.tax_fee_config') }}">
+                            <i class="bi bi-percent"></i> Tax & Fee Config
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== PAYMENT TEAM MENU (Super Admin ONLY) ========== -->
+                {% elif current_user.role == 'super_admin' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'payment.dashboard' %}active{% endif %}" 
+                           href="{{ url_for('payment.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'payment.analytics_dashboard' %}active{% endif %}" 
+                           href="{{ url_for('payment.analytics_dashboard') }}">
+                            <i class="bi bi-bar-chart-steps"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'payment.invoices' %}active{% endif %}" 
+                           href="{{ url_for('payment.invoices') }}">
+                            <i class="bi bi-file-pdf"></i> Invoices
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'payment.report_generator' %}active{% endif %}" 
+                           href="{{ url_for('payment.report_generator') }}">
+                            <i class="bi bi-graph-up"></i> Reports
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== COMPANY PAYMENT USER (Non-LOLC Companies) ========== -->
+                {% elif current_user.role == 'payment_company_user' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'payment.company_dashboard' %}active{% endif %}" 
+                           href="{{ url_for('payment.company_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'payment.company_reports' %}active{% endif %}" 
+                           href="{{ url_for('payment.company_reports') }}">
+                            <i class="bi bi-graph-up"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'payment.company_invoice' %}active{% endif %}" 
+                           href="{{ url_for('payment.company_invoice', company_id=current_user.company_id) }}">
+                            <i class="bi bi-receipt"></i> Invoice
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== FINANCE CONTROLLER MENU ========== -->
+                {% elif active_role == 'finance_controller' or current_user.role == 'finance_controller' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'finance_controller.dashboard' %}active{% endif %}" 
+                           href="{{ url_for('finance_controller.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== BU TEAM MENU ========== -->
+                {% elif current_user.role == 'bu_user' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'bu_team.dashboard' %}active{% endif %}" 
+                           href="{{ url_for('bu_team.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'bu_team.new_entry' %}active{% endif %}" 
+                           href="{{ url_for('bu_team.new_entry') }}">
+                            <i class="bi bi-plus-circle"></i> New Time Entry
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== HEAD OF IT MENU ========== -->
+                {% elif current_user.role == 'head_of_it' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'head_of_it.dashboard' %}active{% endif %}" 
+                           href="{{ url_for('head_of_it.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'head_of_it.loit_report' %}active{% endif %}" 
+                           href="{{ url_for('head_of_it.loit_report') }}">
+                            <i class="bi bi-receipt"></i> LOIT Report
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== SUPERVISOR MENU ========== -->
+                {% elif current_user.role == 'supervisor' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'supervisor.dashboard' %}active{% endif %}" 
+                           href="{{ url_for('supervisor.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== RECORD ASSISTANT MENU ========== -->
+                {% elif current_user.role == 'record_assistant' %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'record_assistant.dashboard' %}active{% endif %}" 
+                           href="{{ url_for('record_assistant.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'record_assistant.loit_report' %}active{% endif %}" 
+                           href="{{ url_for('record_assistant.loit_report') }}">
+                            <i class="bi bi-graph-up"></i> LOIT Report
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========== FALLBACK / DEFAULT ========== -->
+                {% else %}
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" 
+                           href="{{ url_for('dashboard.index') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                </ul>
+                {% endif %}
+
+                <hr class="bg-white opacity-25 mt-4">
+
+                <!-- Role Switcher (only for finance controller with admin access) -->
+                {% if current_user.role == 'finance_controller' and current_user.has_admin_access %}
+                <li class="nav-item mt-2 mb-2" style="list-style: none;">
+                    <div class="text-center mt-2 mb-2">
+                        <small class="text-white-50">
+                            <i class="bi bi-arrow-repeat me-1"></i> Current Mode: 
+                            <strong class="text-warning">
+                                {% set active_role = session.get('active_role', current_user.role) %}
+                                {% if active_role == 'admin' %}Admin{% else %}Finance Controller{% endif %}
+                            </strong>
+                        </small>
+                    </div>
+                    <a class="nav-link text-info" href="{{ url_for('auth.switch_role') }}">
+                        <i class="bi bi-arrow-repeat me-2"></i>
+                        Switch to {% set active_role = session.get('active_role', current_user.role) %}{% if active_role == 'admin' %}Finance Controller{% else %}Admin{% endif %}
+                    </a>
+                    <hr class="bg-white opacity-25 mt-2">
+                </li>
+                {% endif %}
+
+                <!-- Profile & Logout -->
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-light btn-sm rounded-pill">
+                        <i class="bi bi-person-circle me-2"></i> Profile
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm rounded-pill">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Floating Toggle Button -->
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+        </button>
+
+        <!-- Main Content -->
+        <main class="content-wrapper" id="contentWrapper">
+            <div class="container-fluid main-content">
+                <!-- Flash Messages with modern styling -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm border-0 mt-2" role="alert">
+                                <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script>
+        AOS.init({ duration: 600, once: true, offset: 10 });
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const contentWrapper = document.getElementById('contentWrapper');
+            
+            const sidebarState = localStorage.getItem('sidebarCollapsed');
+            if (sidebarState === 'true') {
+                sidebar.classList.add('collapsed');
+                contentWrapper.classList.add('expanded');
+                toggleBtn.innerHTML = '<i class="bi bi-list-ul"></i>';
+            } else {
+                toggleBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+            }
+            
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                contentWrapper.classList.toggle('expanded');
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    toggleBtn.innerHTML = '<i class="bi bi-list-ul"></i>';
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                } else {
+                    toggleBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                }
+            });
+        });
+    </script>
+
+    <!-- Document Modals (Enhanced) -->
+    <div class="modal fade" id="companyDocumentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title"><i class="bi bi-building me-2"></i>Company Documents</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="companyDocumentsList"><div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading documents...</p></div></div>
+                </div>
+                <div class="modal-footer bg-light border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="serviceDocumentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white border-0">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Service Documents</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <ul class="nav nav-tabs border-0 gap-2" role="tablist">
+                        <li class="nav-item"><button class="nav-link active rounded-pill px-4" data-bs-toggle="tab" data-bs-target="#serviceDocsList"><i class="bi bi-files"></i> Documents</button></li>
+                        <li class="nav-item"><button class="nav-link rounded-pill px-4" data-bs-toggle="tab" data-bs-target="#uploadServiceDoc"><i class="bi bi-cloud-upload"></i> Upload</button></li>
+                    </ul>
+                    <div class="tab-content mt-4">
+                        <div class="tab-pane fade show active" id="serviceDocsList"><div id="serviceDocumentsList"><div class="text-center py-4"><div class="spinner-border text-primary"></div><p>Loading...</p></div></div></div>
+                        <div class="tab-pane fade" id="uploadServiceDoc">
+                            <form id="uploadServiceDocumentForm" enctype="multipart/form-data">
+                                <input type="hidden" id="serviceCompanyId" name="company_id">
+                                <input type="hidden" id="serviceItemId" name="service_item_id">
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Select Document <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control rounded-pill" id="serviceDocFile" name="file" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt">
+                                    <small class="text-muted">Max 10MB (PDF, Word, Excel, Images)</small>
+                                </div>
+                                <div id="serviceUploadProgress" style="display:none;"><div class="progress mb-3"><div id="serviceUploadProgressBar" class="progress-bar" style="width:0%">0%</div></div></div>
+                                <button type="submit" class="btn btn-modern w-100 py-2"><i class="bi bi-cloud-upload me-2"></i> Upload Document</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCompanyId = null;
+        let currentServiceItemId = null;
+
+        function showCompanyDocumentModal(companyId) {
+            currentCompanyId = companyId;
+            loadCompanyDocuments(companyId);
+            new bootstrap.Modal(document.getElementById('companyDocumentModal')).show();
+        }
+        function showDocumentModal(companyId, serviceItemId) {
+            if (!companyId || companyId === 'null') { Swal.fire('Error', 'Invalid company ID', 'error'); return; }
+            const numericCompanyId = parseInt(companyId);
+            currentCompanyId = numericCompanyId;
+            currentServiceItemId = serviceItemId || null;
+            document.getElementById('serviceCompanyId').value = numericCompanyId;
+            document.getElementById('serviceItemId').value = serviceItemId || '';
+            loadServiceDocuments(numericCompanyId, serviceItemId);
+            new bootstrap.Modal(document.getElementById('serviceDocumentModal')).show();
+        }
+
+        async function loadCompanyDocuments(companyId) {
+            const container = document.getElementById('companyDocumentsList');
+            try {
+                const res = await fetch(`/api/documents/company/${companyId}`);
+                const result = await res.json();
+                if (result.success && result.documents?.length) {
+                    let html = `<div class="list-group list-group-light">`;
+                    result.documents.forEach(doc => {
+                        html += `<div class="list-group-item doc-item mb-2 p-3"><div class="d-flex flex-wrap align-items-center justify-content-between"><div><i class="bi ${getFileIcon(doc.file_type)} fs-4 me-3"></i><strong>${escapeHtml(doc.original_filename)}</strong><div><small class="text-muted">${doc.file_type.toUpperCase()} · ${doc.size_formatted}</small></div></div><div><small>${escapeHtml(doc.uploaded_by)}<br>${doc.created_at}</small></div></div><div class="mt-2"><a href="/api/documents/download/${doc.id}" class="btn btn-sm btn-outline-info rounded-pill px-3"><i class="bi bi-download"></i> Download</a></div></div>`;
+                    });
+                    container.innerHTML = html;
+                } else container.innerHTML = `<div class="text-center py-5 text-muted"><i class="bi bi-folder2-open fs-1"></i><p>No documents found</p></div>`;
+            } catch(e) { container.innerHTML = `<div class="alert alert-danger">Error loading</div>`; }
+        }
+
+        async function loadServiceDocuments(companyId, serviceItemId) {
+            const container = document.getElementById('serviceDocumentsList');
+            const url = serviceItemId ? `/api/documents/service/${serviceItemId}` : `/api/documents/company/${companyId}`;
+            try {
+                const res = await fetch(url);
+                const result = await res.json();
+                if (result.success && result.documents?.length) {
+                    let html = ``;
+                    result.documents.forEach(doc => {
+                        html += `<div class="doc-item p-3 mb-3 rounded-3"><div class="d-flex justify-content-between align-items-start flex-wrap"><div><i class="bi ${getFileIcon(doc.file_type)} fs-3 me-2"></i><span class="fw-semibold">${escapeHtml(doc.original_filename)}</span><div class="small text-secondary">${doc.size_formatted} · ${doc.file_type}</div></div><div class="text-end"><small>${doc.uploaded_by}<br>${doc.created_at}</small></div></div><div class="mt-3"><a href="/api/documents/download/${doc.id}" class="btn btn-sm btn-modern rounded-pill px-4"><i class="bi bi-download"></i> Download</a></div></div>`;
+                    });
+                    container.innerHTML = html;
+                } else container.innerHTML = `<div class="text-center py-5 text-muted"><i class="bi bi-folder-symlink fs-1"></i><p>No documents yet</p><small>Upload files using the upload tab</small></div>`;
+            } catch(e) { container.innerHTML = `<div class="alert alert-danger">Could not load docs</div>`; }
+        }
+
+        function getFileIcon(ft) {
+            const map = {pdf:'bi-file-pdf', doc:'bi-file-word', docx:'bi-file-word', xls:'bi-file-excel', xlsx:'bi-file-excel', jpg:'bi-file-image', jpeg:'bi-file-image', png:'bi-file-image', txt:'bi-file-text'};
+            return map[ft] || 'bi-file-earmark';
+        }
+        function escapeHtml(t){ if(!t) return ''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            const upForm = document.getElementById('uploadServiceDocumentForm');
+            if(upForm){
+                upForm.addEventListener('submit', async function(e){
+                    e.preventDefault();
+                    const fileInput = document.getElementById('serviceDocFile');
+                    if(!fileInput.files.length) { Swal.fire('Error','Select a file','error'); return; }
+                    const formData = new FormData(upForm);
+                    const progDiv = document.getElementById('serviceUploadProgress');
+                    const progBar = document.getElementById('serviceUploadProgressBar');
+                    if(progDiv) progDiv.style.display='block';
+                    if(progBar) { progBar.style.width='30%'; progBar.innerText='30%'; }
+                    try{
+                        const resp = await fetch('/api/documents/upload', {method:'POST', body:formData, credentials:'same-origin'});
+                        const result = await resp.json();
+                        if(result.success){
+                            if(progBar){ progBar.style.width='100%'; progBar.innerText='100%'; }
+                            Swal.fire('Uploaded!','Document uploaded successfully','success');
+                            upForm.reset();
+                            const firstTab = document.querySelector('#serviceDocumentModal .nav-tabs button:first-child');
+                            if(firstTab) new bootstrap.Tab(firstTab).show();
+                            if(currentCompanyId) loadServiceDocuments(currentCompanyId, currentServiceItemId);
+                        } else Swal.fire('Error', result.error,'error');
+                    } catch(err){ Swal.fire('Error',err.message,'error'); }
+                    finally { setTimeout(()=>{ if(progDiv) progDiv.style.display='none'; if(progBar){ progBar.style.width='0%'; progBar.innerText='0%'; } },1000); }
+                });
+            }
+        });
+        function getRoleBadge(role){ const b={'admin':'<span class="badge bg-danger">Admin</span>','bu_user':'<span class="badge bg-primary">BU Team</span>','head_of_it':'<span class="badge bg-info">Head IT</span>','finance_controller':'<span class="badge bg-success">Finance</span>'}; return b[role]||'<span class="badge bg-secondary">User</span>'; }
+        function convertUTCToLocal(){ document.querySelectorAll('.utc-datetime').forEach(el=>{ let utc=el.getAttribute('data-utc')||el.innerText.trim(); if(utc && utc.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)){ let d=new Date(utc+' UTC'); if(!isNaN(d)) el.innerText=d.toLocaleString(); } }); }
+        document.addEventListener('DOMContentLoaded', convertUTCToLocal);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,151 @@
+/* ========================================
+   BUTTONS.CSS - Button Styles
+   ======================================== */
+
+/* Modern Button */
+.btn-modern {
+    background: var(--bg-active);
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 8px 24px;
+    color: white;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(10, 37, 64, 0.3);
+    color: white;
+}
+
+/* Outline Modern */
+.btn-outline-modern {
+    border-radius: var(--border-radius-pill);
+    border: 1px solid #CBD5E1;
+    background: white;
+    color: var(--navy-mid);
+    transition: var(--transition-smooth);
+}
+
+.btn-outline-modern:hover {
+    background: #EFF6FF;
+    border-color: var(--navy-mid);
+}
+
+/* Primary Button */
+.btn-primary {
+    background: var(--bg-active);
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 8px 24px;
+    transition: var(--transition-smooth);
+}
+
+.btn-primary:hover {
+    background: var(--navy-light);
+    transform: translateY(-1px);
+}
+
+/* Success Button */
+.btn-success {
+    background: var(--accent-success);
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 8px 24px;
+    transition: var(--transition-smooth);
+}
+
+.btn-success:hover {
+    background: #047857;
+    transform: translateY(-1px);
+}
+
+/* Danger Button */
+.btn-danger {
+    background: var(--accent-danger);
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 8px 24px;
+    transition: var(--transition-smooth);
+}
+
+.btn-danger:hover {
+    background: #B91C1C;
+    transform: translateY(-1px);
+}
+
+/* Info Button */
+.btn-info {
+    background: var(--accent-info);
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    transition: var(--transition-smooth);
+}
+
+.btn-info:hover {
+    background: #1E6A8A;
+    transform: translateY(-1px);
+}
+
+/* View Details Button */
+.btn-view-details {
+    background: #EFF6FF;
+    border: none;
+    color: var(--navy-mid);
+    border-radius: var(--border-radius-pill);
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    transition: var(--transition-smooth);
+}
+
+.btn-view-details:hover {
+    background: var(--navy-mid);
+    color: white;
+}
+
+/* Workflow Button */
+.btn-workflow {
+    background: #FEF3C7;
+    border: none;
+    color: #92400E;
+    border-radius: var(--border-radius-pill);
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    transition: var(--transition-smooth);
+}
+
+.btn-workflow:hover {
+    background: #D97706;
+    color: white;
+}
+
+/* Export Button */
+.btn-export {
+    background: var(--bg-active);
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 10px 24px;
+    color: white;
+    transition: var(--transition-smooth);
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(30, 58, 95, 0.3);
+    color: white;
+}
+
+/* Button Group */
+.btn-group-sm .btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: var(--border-radius-pill);
+    margin: 0 2px;
+}
+
+.btn-group-sm .btn i {
+    margin-right: 2px;
+}

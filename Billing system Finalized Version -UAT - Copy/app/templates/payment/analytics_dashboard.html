@@ -1,0 +1,543 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - LOLC Technologies{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet">
+<style>
+    :root {
+        --color-primary: #1E3A5F;
+        --color-primary-dark: #0A2540;
+        --color-border: #E2E8F0;
+        --color-bg-light: #F8FAFE;
+        --color-success: #059669;
+        --color-success-bg: #D1FAE5;
+        --color-warning: #D97706;
+        --color-warning-bg: #FEF3C7;
+        --color-info: #2563EB;
+        --border-radius-lg: 16px;
+        --border-radius-sm: 8px;
+    }
+
+    .dashboard-container {
+        color: var(--color-primary-dark);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .analytics-card {
+        background: #ffffff;
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--color-border);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .analytics-card-header {
+        background: var(--color-bg-light);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .analytics-card-header h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-primary-dark);
+    }
+
+    .analytics-card-body {
+        padding: 1.5rem;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border-radius: var(--border-radius-lg);
+        padding: 1.25rem;
+        border: 1px solid var(--color-border);
+        height: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748B;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .section-summary-box {
+        background: var(--color-bg-light);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        border: 1px solid var(--color-border);
+    }
+
+    .badge-status {
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .badge-approved {
+        background: var(--color-success-bg);
+        color: #065F46;
+    }
+
+    .comparison-pill {
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .comparison-positive { color: var(--color-success); }
+    .comparison-negative { color: #DC2626; }
+
+    .custom-select-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        padding: 6px 16px;
+        border-radius: 50px;
+        border: 1px solid var(--color-border);
+    }
+
+    .custom-select-pill select {
+        border: none;
+        background: transparent;
+        font-weight: 500;
+        outline: none;
+        color: var(--color-primary-dark);
+        cursor: pointer;
+    }
+
+    .progress-bar-custom {
+        height: 10px;
+        border-radius: 50px;
+        background: var(--color-border);
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 50px;
+        transition: width 0.6s ease;
+    }
+
+    .metric-focus-box {
+        text-align: center;
+        padding: 1.25rem;
+        background: var(--color-bg-light);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--color-border);
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content dashboard-container">
+    <!-- Top Action Header Bar -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-md-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h2 fw-bold mb-1" style="color: var(--color-primary-dark);">Analytics Dashboard</h1>
+            <p class="text-muted mb-0">Operational performance, processing timelines, and clean revenue insights.</p>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="custom-select-pill">
+                <i class="bi bi-building text-primary"></i>
+                <select id="companyFilter" onchange="loadAllData()">
+                    <option value="all">All Companies</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <a href="{{ url_for('payment.analytics_user_search') }}" class="btn btn-outline-primary rounded-pill px-4 btn-sm fw-medium">
+                <i class="bi bi-person-search me-2"></i> User Search
+            </a>
+            <a href="{{ url_for('payment.analytics_unit_analysis') }}" class="btn btn-outline-secondary rounded-pill px-4 btn-sm fw-medium">
+                <i class="bi bi-diagram-3 me-2"></i> Unit Analysis
+            </a>
+        </div>
+    </div>
+
+    <!-- Configuration Filtering Panel -->
+    <div class="analytics-card">
+        <div class="analytics-card-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-calendar-range text-primary fs-5"></i>
+                
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <input type="text" id="dateRangePicker" class="form-control form-control-sm bg-white" style="width: 260px; border-radius: 50px;" placeholder="Select processing range">
+                <select id="comparisonPeriod" class="form-select form-select-sm" style="width: 160px; border-radius: 50px;" onchange="loadComparison()">
+                    <option value="previous_month">vs Previous Month</option>
+                    <option value="previous_year">vs Previous Year</option>
+                </select>
+            </div>
+        </div>
+        <div class="analytics-card-body">
+            <!-- SECTION: Finance Approved Metrics Panel (Removed Pipeline Section) -->
+            <div class="section-summary-box">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            <h5 class="mb-0 fw-bold">Finance Approved Breakdown</h5>
+                            <span class="badge-status badge-approved ms-2">Ready to Invoice</span>
+                        </div>
+                        
+                    </div>
+                    <div id="totalComparison" class="comparison-pill mt-1"></div>
+                </div>
+                
+                <div class="row g-3 pt-2">
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Services</div>
+                            <div class="stat-value text-dark" id="approvedTotalServices">0</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-label">LOIT Chargeback</div>
+                            <div class="stat-value text-dark" id="approvedLoitCb">Rs 0.00</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-label">LOIT Showback</div>
+                            <div class="stat-value text-dark" id="approvedLoitSb">Rs 0.00</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-label">Showback</div>
+                            <div class="stat-value text-dark" id="approvedLolcSb">Rs 0.00</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="stat-card border-success" style="background-color: rgba(5, 150, 105, 0.03);">
+                            <div class="stat-label text-success">Grand Total Billed Ecosystem Revenue</div>
+                            <div class="stat-value text-success" id="approvedGrandTotal">Rs 0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Visual Matrix Segments Chart -->
+        <div class="col-xl-7">
+            <div class="analytics-card h-100 mb-0">
+                <div class="analytics-card-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-pie-chart text-primary fs-5"></i>
+                        <h4>Entity Allocation (Finance Approved)</h4>
+                    </div>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1" style="font-size: 0.75rem;" onclick="toggleChartType()">
+                        <i class="bi bi-arrow-left-right me-1"></i> Switch View
+                    </button>
+                </div>
+                <div class="analytics-card-body d-flex align-items-center justify-content-center">
+                    <div class="w-100" style="position: relative; height: 260px;">
+                        <canvas id="companyRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Latency Lifecycle Processing Block -->
+        <div class="col-xl-5">
+            <div class="analytics-card h-100 mb-0">
+                <div class="analytics-card-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history text-primary fs-5"></i>
+                        <h4>Approval Lifecycle Velocity</h4>
+                    </div>
+                </div>
+                <div class="analytics-card-body">
+                
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="metric-focus-box">
+                                <span class="d-block small text-muted fw-medium">Supervisor Gate</span>
+                                <h3 class="fw-bold my-1 text-primary" id="avgSupervisorTime">0</h3>
+                                <span class="text-muted small">hours</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-focus-box">
+                                <span class="d-block small text-muted fw-medium">Head of IT Gate</span>
+                                <h3 class="fw-bold my-1 text-primary" id="avgHeadTime">0</h3>
+                                <span class="text-muted small">hours</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-focus-box">
+                                <span class="d-block small text-muted fw-medium">Finance Controller</span>
+                                <h3 class="fw-bold my-1 text-primary" id="avgFinanceTime">0</h3>
+                                <span class="text-muted small">hours</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-focus-box" style="background-color: var(--color-bg-light); border-color: var(--color-primary);">
+                                <span class="d-block small text-muted fw-semibold">Total Lifecycle</span>
+                                <h3 class="fw-bold my-1 text-dark" id="avgTotalTime">0</h3>
+                                <span class="text-muted small fw-medium">hours</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-semibold text-dark">Ecosystem Velocity Distribution</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div id="bottleneckBar" class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2 text-muted" style="font-size: 0.7rem; font-weight: 500;">
+                            <span>SUPERVISOR</span>
+                            <span>HEAD OF IT</span>
+                            <span>FINANCE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// ============ HELPER FUNCTIONS ============
+function formatCurrency(amount) {
+    if (amount === undefined || amount === null || isNaN(amount)) return 'Rs 0.00';
+    return 'Rs ' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ============ GLOBAL VARIABLES ============
+let currentDateRange = { start: moment().startOf('month').format('YYYY-MM-DD'), end: moment().endOf('month').format('YYYY-MM-DD') };
+let companyChart = null;
+let currentChartType = 'bar';
+
+// ============ INITIALIZATION ============
+$(document).ready(function() {
+    window.dateRangePicker = $('#dateRangePicker').daterangepicker({
+        startDate: moment().startOf('month'),
+        endDate: moment().endOf('month'),
+        locale: { format: 'YYYY-MM-DD' },
+        autoUpdateInput: true,
+        ranges: {
+            'Today': [moment(), moment()],
+            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            'This Quarter': [moment().startOf('quarter'), moment().endOf('quarter')],
+            'This Year': [moment().startOf('year'), moment().endOf('year')]
+        }
+    }).on('apply.daterangepicker', function(ev, picker) {
+        currentDateRange.start = picker.startDate.format('YYYY-MM-DD');
+        currentDateRange.end = picker.endDate.format('YYYY-MM-DD');
+        $(this).val(picker.startDate.format('YYYY-MM-DD') + ' to ' + picker.endDate.format('YYYY-MM-DD'));
+        loadAllData();
+    });
+    
+    $('#dateRangePicker').val(moment().startOf('month').format('YYYY-MM-DD') + ' to ' + moment().endOf('month').format('YYYY-MM-DD'));
+    
+    loadAllData();
+});
+
+// ============ LOAD SUMMARY BY STATUS WITH COMPANY FILTER ============
+async function loadSummaryByStatus() {
+    const companyId = document.getElementById('companyFilter').value;
+    const urlParams = `?date_from=${currentDateRange.start}&date_to=${currentDateRange.end}&company_id=${companyId}`;
+    
+    try {
+        // Load Finance Approved
+        let approvedUrl = `/api/payment/analytics/summary${urlParams}&status=finance_approved`;
+        let approvedResponse = await fetch(approvedUrl);
+        let approvedResult = await approvedResponse.json();
+        
+        if (approvedResult.success) {
+            document.getElementById('approvedTotalServices').textContent = approvedResult.summary.total_services || 0;
+            document.getElementById('approvedLoitCb').textContent = formatCurrency(approvedResult.summary.total_loit_cb);
+            document.getElementById('approvedLoitSb').textContent = formatCurrency(approvedResult.summary.total_loit_sb);
+            document.getElementById('approvedLolcSb').textContent = formatCurrency(approvedResult.summary.total_lolc_sb || 0);
+            document.getElementById('approvedGrandTotal').textContent = formatCurrency(approvedResult.summary.total_grand);
+        }
+        
+        await loadComparison();
+        
+    } catch (error) { console.error('Error:', error); }
+}
+
+// ============ LOAD COMPARISON ============
+async function loadComparison() {
+    const comparisonType = $('#comparisonPeriod').val();
+    const companyId = document.getElementById('companyFilter').value;
+    let compareStart, compareEnd;
+    const currentStart = moment(currentDateRange.start);
+    const currentEnd = moment(currentDateRange.end);
+    
+    if (comparisonType === 'previous_month') {
+        compareStart = currentStart.clone().subtract(1, 'month');
+        compareEnd = currentEnd.clone().subtract(1, 'month');
+    } else {
+        compareStart = currentStart.clone().subtract(1, 'year');
+        compareEnd = currentEnd.clone().subtract(1, 'year');
+    }
+    
+    try {
+        let url = `/api/payment/analytics/summary?date_from=${compareStart.format('YYYY-MM-DD')}&date_to=${compareEnd.format('YYYY-MM-DD')}&status=finance_approved&company_id=${companyId}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        const targetElement = document.getElementById('totalComparison');
+        if (!targetElement) return;
+
+        if (result.success) {
+            const currentTotal = parseFloat(document.getElementById('approvedGrandTotal').innerText.replace('Rs ', '').replace(/,/g, '')) || 0;
+            const previousTotal = result.summary.total_grand || 0;
+            const percentChange = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal * 100).toFixed(1) : 0;
+            
+            targetElement.innerHTML = `
+                <span class="${percentChange >= 0 ? 'comparison-positive' : 'comparison-negative'}">
+                    <i class="bi ${percentChange >= 0 ? 'bi-arrow-up' : 'bi-arrow-down'}"></i>
+                    ${Math.abs(percentChange)}% vs ${comparisonType === 'previous_month' ? 'last month' : 'last year'}
+                </span>
+            `;
+        }
+    } catch (error) { console.error('Error:', error); }
+}
+
+// ============ LOAD COMPANY CHART ============
+async function loadCompanyChart() {
+    const companyId = document.getElementById('companyFilter').value;
+    
+    try {
+        let url = `/api/payment/analytics/company-revenue?date_from=${currentDateRange.start}&date_to=${currentDateRange.end}&company_id=${companyId}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        const ctx = document.getElementById('companyRevenueChart').getContext('2d');
+        if (companyChart) companyChart.destroy();
+
+        if (result.success && result.companies && result.companies.length > 0) {
+            const companies = result.companies;
+            const labels = companies.map(c => c.name);
+            const revenues = companies.map(c => c.revenue);
+            const colors = ['#1E3A5F', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#6366F1', '#8B5CF6', '#A78BFA'];
+            
+            if (currentChartType === 'pie') {
+                companyChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: { labels: labels, datasets: [{ data: revenues, backgroundColor: colors, borderWidth: 0 }] },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }, 
+                            tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw)}` } } 
+                        }
+                    }
+                });
+            } else {
+                companyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ label: 'Revenue (Rs)', data: revenues, backgroundColor: '#1E3A5F', borderRadius: 4, barThickness: 24 }] },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` Revenue: ${formatCurrency(ctx.raw)}` } } },
+                        scales: { 
+                            y: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        }
+                    }
+                });
+            }
+        } else {
+            companyChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: ['No Data Available'], datasets: [{ data: [0], backgroundColor: '#E2E8F0' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+            });
+        }
+    } catch (error) { console.error('Error:', error); }
+}
+
+// ============ LOAD APPROVAL TIMES WITH ROUNDING ============
+async function loadApprovalTimes() {
+    const companyId = document.getElementById('companyFilter').value;
+    
+    try {
+        let url = `/api/payment/analytics/approval-times?date_from=${currentDateRange.start}&date_to=${currentDateRange.end}&company_id=${companyId}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            // Round to nearest whole number to fix decimal issue
+            document.getElementById('avgSupervisorTime').textContent = Math.round(result.avg_supervisor_hours || 0);
+            document.getElementById('avgHeadTime').textContent = Math.round(result.avg_head_hours || 0);
+            document.getElementById('avgFinanceTime').textContent = Math.round(result.avg_finance_hours || 0);
+            document.getElementById('avgTotalTime').textContent = Math.round(result.avg_total_hours || 0);
+            
+            const total = (result.avg_supervisor_hours || 0) + (result.avg_head_hours || 0) + (result.avg_finance_hours || 0);
+            if (total > 0) {
+                const supervisorPercent = ((result.avg_supervisor_hours || 0) / total) * 100;
+                const headPercent = ((result.avg_head_hours || 0) / total) * 100;
+                document.getElementById('bottleneckBar').style.width = `${supervisorPercent + headPercent}%`;
+                document.getElementById('bottleneckBar').style.backgroundColor = supervisorPercent > headPercent ? '#059669' : '#D97706';
+            } else {
+                document.getElementById('bottleneckBar').style.width = `0%`;
+            }
+        }
+    } catch (error) { console.error('Error:', error); }
+}
+
+// ============ LOAD ALL DATA ============
+async function loadAllData() {
+    await Promise.all([loadSummaryByStatus(), loadCompanyChart(), loadApprovalTimes()]);
+}
+
+function toggleChartType() {
+    currentChartType = currentChartType === 'pie' ? 'bar' : 'pie';
+    loadCompanyChart();
+}
+</script>
+{% endblock %}

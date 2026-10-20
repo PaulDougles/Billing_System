@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Invoice System{% endblock %}
+
+{% block content %}
+<div class="main-content p-4 p-md-5">
+    {% include 'components/welcome_banner.html' %}
+    
+    <!-- Determine if we're in admin mode (either by role OR switched mode) -->
+    {% set is_admin_mode = (current_user.role in ['admin', 'super_admin'] or session.get('active_role') == 'admin') %}
+    
+    {% if is_admin_mode %}
+    <!-- ========== ADMIN DASHBOARD (Statistics View) ========== -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-5">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="header-icon-box shadow-sm text-white">
+                    <i class="bi bi-speedometer2 fs-3"></i>
+                </div>
+                <div>
+                    <h1 class="h2 fw-bold tracking-tight mb-1" style="color: var(--color-slate-900);">Admin Dashboard</h1>
+                    <p class="text-muted small mb-0">System status overview and core data configurations</p>
+                </div>
+            </div>
+        </div>
+        <div data-aos="fade-left" class="w-100 w-sm-auto">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('admin.list_users') }}" class="btn btn-modern shadow-sm">
+                    <i class="bi bi-people me-2"></i>Manage Users
+                </a>
+                <a href="{{ url_for('admin.manage_companies') }}" class="btn btn-outline-modern">
+                    <i class="bi bi-building me-2"></i>Companies
+                </a>
+                <a href="{{ url_for('admin.manage_units') }}" class="btn btn-outline-modern">
+                    <i class="bi bi-diagram-3 me-2"></i>Units
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Stats Row -->
+    <div class="row g-4 mb-5">
+        <!-- Card 1: Total Users -->
+        <div class="col-12 col-md-4" data-aos="fade-up" data-aos-delay="0">
+            <div class="modern-card p-4 border-start-primary">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase tracking-wider small fw-bold text-muted">Total Users</span>
+                        <h2 class="display-5 fw-bold mb-0 mt-2" style="color: var(--color-primary);">{{ total_users }}</h2>
+                    </div>
+                    <div class="icon-wrapper bg-primary-subtle text-primary">
+                        <i class="bi bi-people-fill fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card 2: Companies -->
+        <div class="col-12 col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="modern-card p-4 border-start-success">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase tracking-wider small fw-bold text-muted">Companies</span>
+                        <h2 class="display-5 fw-bold mb-0 mt-2" style="color: var(--color-success);">{{ total_companies }}</h2>
+                    </div>
+                    <div class="icon-wrapper bg-success-subtle text-success">
+                        <i class="bi bi-building fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card 3: Business Units -->
+        <div class="col-12 col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="modern-card p-4 border-start-warning">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase tracking-wider small fw-bold text-muted">Business Units</span>
+                        <h2 class="display-5 fw-bold mb-0 mt-2" style="color: var(--color-warning);">{{ total_units }}</h2>
+                    </div>
+                    <div class="icon-wrapper bg-warning-subtle text-warning">
+                        <i class="bi bi-diagram-3 fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Distribution Section -->
+    <div class="row" data-aos="fade-up" data-aos-delay="300">
+        <div class="col-12">
+            <div class="modern-card p-4 p-md-5">
+                <div class="d-flex align-items-center gap-2 mb-4 border-bottom pb-3">
+                    <i class="bi bi-pie-chart-fill text-primary fs-4"></i>
+                    <h5 class="fw-bold mb-0" style="color: var(--color-slate-900);">User Role Distribution</h5>
+                </div>
+                
+                <!-- Clean, Flex/Grid based distribution layout -->
+                <div class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-3">
+                    <div class="col">
+                        <div class="role-pill p-3 text-center">
+                            <div class="fs-2 fw-bold text-primary mb-1">{{ bu_users }}</div>
+                            <div class="small fw-semibold text-uppercase tracking-wider text-muted">BU Team</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="role-pill p-3 text-center">
+                            <div class="fs-2 fw-bold text-success mb-1">{{ head_of_it_users }}</div>
+                            <div class="small fw-semibold text-uppercase tracking-wider text-muted">Head of IT</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="role-pill p-3 text-center">
+                            <div class="fs-2 fw-bold text-info mb-1">{{ finance_controllers }}</div>
+                            <div class="small fw-semibold text-uppercase tracking-wider text-muted">Finance</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="role-pill p-3 text-center">
+                            <div class="fs-2 fw-bold text-warning mb-1">{{ payment_teams }}</div>
+                            <div class="small fw-semibold text-uppercase tracking-wider text-muted">Payment Teams</div>
+                        </div>
+                    </div>
+                    <div class="col col-sm-12 col-md-auto flex-grow-1">
+                        <div class="role-pill p-3 text-center">
+                            <div class="fs-2 fw-bold text-dark mb-1">{{ supervisors }}</div>
+                            <div class="small fw-semibold text-uppercase tracking-wider text-muted">Supervisors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- ========== NON-ADMIN DASHBOARD (Welcome Message) ========== -->
+    <div class="row justify-content-center my-4" data-aos="fade-up">
+        <div class="col-12 col-lg-8">
+            <div class="modern-card text-center p-4 p-md-5">
+                <div class="mb-4">
+                    <div class="icon-wrapper bg-primary-subtle text-primary mx-auto large-icon">
+                        <i class="bi bi-person-badge fs-1"></i>
+                    </div>
+                </div>
+                <h2 class="fw-bold" style="color: var(--color-slate-900);">Welcome back, {{ current_user.full_name }}!</h2>
+                <p class="text-muted mt-2 fs-5">
+                    Logged in as <span class="badge bg-primary-subtle text-primary font-monospace px-3 py-2 rounded-pill fs-6">{{ current_user.role|replace('_', ' ')|title }}</span>
+                </p>
+                
+                <div class="alert alert-modern border-0 d-inline-flex align-items-center gap-2 mx-auto mt-4 px-4 py-3 text-start">
+                    <i class="bi bi-info-circle-fill text-primary fs-5"></i> 
+                    <span class="small text-secondary">Access your assigned administrative tools and action logs directly from the sidebar network menu.</span>
+                </div>
+                
+                {% if current_user.role == 'bu_user' %}
+                <div class="mt-4 pt-2">
+                    <a href="{{ url_for('bu_team.new_entry') }}" class="btn btn-modern btn-lg px-5 shadow-sm">
+                        <i class="bi bi-plus-circle me-2"></i>Create New Time Entry
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Scope Variables for Consistent Palette System */
+    :root {
+        --color-primary: #1E4D6F;
+        --color-primary-dark: #0F3B56;
+        --color-success: #10B981;
+        --color-warning: #F59E0B;
+        --color-slate-50: #F8FAFC;
+        --color-slate-100: #F1F5F9;
+        --color-slate-200: #E2E8F0;
+        --color-slate-900: #0F172A;
+        --primary-gradient: linear-gradient(135deg, #1E4D6F 0%, #0F3B56 100%);
+    }
+
+    /* Layout Frame Container */
+    .main-content {
+        background-color: #F4F7FA;
+        min-height: 85vh;
+        border-radius: 24px;
+        border: 1px solid rgba(0, 0, 0, 0.03);
+    }
+
+    /* Dynamic UI Component Grid Cards */
+    .modern-card {
+        border-radius: 16px;
+        background: #FFFFFF;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid var(--color-slate-200);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+    }
+    .modern-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Left-Border Highlights for Numerical Cards */
+    .border-start-primary { border-start: 4px solid var(--color-primary) !important; }
+    .border-start-success { border-start: 4px solid var(--color-success) !important; }
+    .border-start-warning { border-start: 4px solid var(--color-warning) !important; }
+
+    /* Structural Top Header Box */
+    .header-icon-box {
+        background: var(--primary-gradient);
+        border-radius: 12px;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Component System Icons Styles */
+    .icon-wrapper {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .icon-wrapper.large-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+    }
+
+    /* Role Metrics Pills Layout */
+    .role-pill {
+        background-color: var(--color-slate-50);
+        border: 1px solid var(--color-slate-100);
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    .role-pill:hover {
+        background-color: #FFFFFF;
+        border-color: var(--color-slate-200);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    /* System Typography & Tracking Standards */
+    .tracking-tight { letter-spacing: -0.025em; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    
+    /* Modern Adaptive Context Alerts */
+    .alert-modern {
+        background-color: #EFF6FF;
+        border-left: 4px solid #3B82F6 !important;
+        border-radius: 12px;
+        max-width: 520px;
+    }
+
+    /* Adaptive Actions Systems Buttons UI */
+    .btn-modern {
+        background: var(--primary-gradient);
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-weight: 500;
+        color: #FFFFFF;
+        transition: filter 0.15s ease;
+    }
+    .btn-modern:hover {
+        filter: brightness(1.15);
+        color: #FFFFFF;
+    }
+    .btn-outline-modern {
+        border-radius: 10px;
+        border: 1px solid var(--color-slate-200);
+        background: #FFFFFF;
+        color: var(--color-primary);
+        padding: 10px 22px;
+        font-weight: 500;
+        transition: all 0.15s ease;
+    }
+    .btn-outline-modern:hover {
+        background: var(--color-slate-50);
+        border-color: var(--color-primary);
+        color: var(--color-primary-dark);
+    }
+</style>
+{% endblock %}

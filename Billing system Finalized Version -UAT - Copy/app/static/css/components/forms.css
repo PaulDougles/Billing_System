@@ -1,0 +1,86 @@
+/* ========================================
+   FORMS.CSS - Form Styles
+   ======================================== */
+
+.form-control, .form-select {
+    border-radius: 14px;
+    border: 1px solid #E2E8F0;
+    padding: 0.75rem 1rem;
+    transition: var(--transition-smooth);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--navy-mid);
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+    outline: none;
+}
+
+/* Checkbox Custom */
+.checkbox-custom {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--navy-mid);
+}
+
+/* Readonly Field */
+.readonly-field {
+    background-color: #e9ecef;
+}
+
+/* Drop Zone */
+.drop-zone {
+    border: 2px dashed #CBD5E1;
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+    background: #F8FAFE;
+}
+
+.drop-zone:hover {
+    border-color: var(--navy-mid);
+    background: #F0F7FF;
+}
+
+.drop-zone.dragover {
+    border-color: var(--accent-success);
+    background: #F0FDF4;
+}
+
+/* Selection Area */
+.selection-area {
+    min-height: 50px;
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Selected Badge */
+.selected-badge {
+    background: #E8F0FE;
+    color: var(--navy-mid);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selected-badge-supervisor {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.selected-badge .remove-btn {
+    cursor: pointer;
+    color: #999;
+    transition: color 0.2s;
+}
+
+.selected-badge .remove-btn:hover {
+    color: #dc3545;
+}

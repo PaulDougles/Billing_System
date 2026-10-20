@@ -1,0 +1,17 @@
+/* ========================================
+   MAIN.CSS - Consolidated Styles
+   ======================================== */
+
+/* Import all modular CSS files */
+@import 'variables.css';
+@import 'base.css';
+@import 'components/cards.css';
+@import 'components/tables.css';
+@import 'components/buttons.css';
+@import 'components/forms.css';
+@import 'components/modals.css';
+@import 'components/timeline.css';
+@import 'components/navigation.css';
+@import 'dashboards/common.css';
+@import 'dashboards/stats.css';
+@import 'utilities.css';

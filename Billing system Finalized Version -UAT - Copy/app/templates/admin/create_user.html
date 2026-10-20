@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Create User - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        border-radius: 32px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #0B2B40 0%, #1E4D6F 100%);
+        padding: 1.5rem;
+    }
+    
+    .role-selector-card {
+        border-radius: 16px;
+        border: 2px solid #e9ecef;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .role-selector-card:hover {
+        border-color: #1E4D6F;
+        background-color: #f8f9fa;
+    }
+    .role-selector-card.selected {
+        border-color: #1E4D6F;
+        background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #1E4D6F;
+        box-shadow: 0 0 0 3px rgba(30,77,111,0.1);
+    }
+    
+    .btn-modern-lg {
+        border-radius: 40px;
+        padding: 12px 24px;
+        font-weight: 600;
+        background: linear-gradient(105deg, #1E4D6F, #0F3B56);
+        border: none;
+        transition: all 0.2s;
+        color: white;
+    }
+    
+    .btn-modern-lg:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(30,77,111,0.3);
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 40px;
+        padding: 8px 20px;
+    }
+    
+    .invalid-feedback {
+        font-size: 0.8rem;
+    }
+    
+    .form-check-input:checked {
+        background-color: #1E4D6F;
+        border-color: #1E4D6F;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-success bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-person-plus-fill fs-2 text-success"></i>
+                </div>
+                <!-- Add this button next to "Create New User" button -->
+<div class="mt-3 mt-sm-0" data-aos="fade-left">
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.bulk_create_users') }}" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="bi bi-people-fill me-2"></i> Bulk Create
+        </a>
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-modern shadow-lg">
+            <i class="bi bi-person-plus-fill me-2"></i> Create New User
+        </a>
+    </div>
+</div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Users
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center" data-aos="fade-up">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <div class="form-header text-white">
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-person-badge me-2"></i> User Information</h5>
+                    <small>All fields marked with * are required</small>
+                </div>
+                <div class="p-4 p-lg-5">
+                    <form method="POST" id="createUserForm" novalidate>
+                        <!-- Basic Information Fields -->
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                <div class="invalid-feedback">First name is required</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                <div class="invalid-feedback">Last name is required</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="invalid-feedback">Valid email required</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Employee ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="employee_id" name="employee_id" required>
+                                <div class="invalid-feedback">Employee ID required</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">NIC <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nic" name="nic" required maxlength="12">
+                                <div class="invalid-feedback">Invalid NIC (9 digits+V/X or 12 digits)</div>
+                                <small class="text-muted">Format: 9 digits followed by V/X OR 12 digits</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+                                <select class="form-select" id="role" name="role" required onchange="toggleRoleFields()">
+                                    <option value="">Select Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="super_admin">Super Admin</option>
+                                    <option value="bu_user">BU Team User</option>
+                                    <option value="supervisor">Supervisor</option>
+                                    <option value="head_of_it">Head of IT</option>
+                                    <option value="record_assistant">Record Assistant</option>
+                                    <option value="finance_controller">Finance Controller</option>
+                                    <option value="payment_company_user">Company Payment Team User</option>
+
+                                </select>
+                            </div>
+                            
+                            <!-- Admin Access Section (only shown for Finance Controller) -->
+                            <div id="adminAccessSection" class="col-12" style="display: none;">
+                                <div class="card border-0 bg-light rounded-4 p-4 mt-2">
+                                    <h6 class="fw-semibold mb-3">
+                                        <i class="bi bi-shield-lock me-2 text-primary"></i>
+                                        Admin Access Configuration
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="has_admin_access" name="has_admin_access" 
+                                               value="true" style="width: 3em; height: 1.5em;">
+                                        <label class="form-check-label fw-semibold ms-2" for="has_admin_access">
+                                            Grant Admin Access to this Finance Controller
+                                        </label>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        When enabled, this user can choose to log in as either Finance Controller or Admin.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Company Field -->
+                            <div id="companyField" class="col-12" style="display: none;">
+                                <label class="form-label fw-semibold">Company <span class="text-danger">*</span></label>
+                                <select class="form-select" id="company_id" name="company_id">
+                                    <option value="">Select Company</option>
+                                    {% for company in companies %}
+                                    <option value="{{ company.id }}">{{ company.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Required for Supervisor, Head of IT, and Payment Team roles</small>
+                            </div>
+                            
+                            <!-- Unit Field -->
+                            <div id="unitField" class="col-12" style="display: none;">
+                                <label class="form-label fw-semibold">Unit <span class="text-danger">*</span></label>
+                                <select class="form-select" id="unit_id" name="unit_id">
+                                    <option value="">Select Unit</option>
+                                    {% for unit in units %}
+                                    <option value="{{ unit.id }}">{{ unit.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Required for BU Team User role</small>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="alert alert-info rounded-4 border-0 bg-info bg-opacity-10">
+                                    <i class="bi bi-envelope-paper-fill me-2"></i>
+                                    <strong>Account Activation:</strong> An email with OTP will be sent for account activation.
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-modern-lg w-100">
+                                    <i class="bi bi-send-check me-2"></i> Create User & Send OTP
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function toggleRoleFields() {
+    const role = document.getElementById('role').value;
+    const companyField = document.getElementById('companyField');
+    const unitField = document.getElementById('unitField');
+    const adminAccessSection = document.getElementById('adminAccessSection');
+    const companySelect = document.getElementById('company_id');
+    const unitSelect = document.getElementById('unit_id');
+    
+    // Roles that require company
+    const companyRoles = ['supervisor', 'head_of_it', 'payment_company_user', 'record_assistant'];
+    
+    // Show/hide company field
+    companyField.style.display = companyRoles.includes(role) ? 'block' : 'none';
+    
+    // Show/hide unit field (only for bu_user)
+    unitField.style.display = role === 'bu_user' ? 'block' : 'none';
+    
+    // Show/hide admin access section (only for finance controller)
+    adminAccessSection.style.display = role === 'finance_controller' ? 'block' : 'none';
+    
+    // Set required attributes
+    companySelect.required = companyRoles.includes(role);
+    unitSelect.required = role === 'bu_user';
+}
+
+// Form validation
+document.getElementById('createUserForm')?.addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Validate required fields
+    ['first_name', 'last_name', 'employee_id', 'role'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+            el.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            el.classList.remove('is-invalid');
+        }
+    });
+    
+    // Validate email
+    const email = document.getElementById('email');
+    if (!email.value.trim() || !/^[^\s@]+@([^\s@]+\.)+[^\s@]+$/.test(email.value)) {
+        email.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        email.classList.remove('is-invalid');
+    }
+    
+    // Validate NIC
+    const nic = document.getElementById('nic');
+    const nicPattern = /^[0-9]{9}[VX]$/i;
+    const nicPattern2 = /^[0-9]{12}$/;
+    if (!nic.value.trim() || (!nicPattern.test(nic.value) && !nicPattern2.test(nic.value))) {
+        nic.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        nic.classList.remove('is-invalid');
+    }
+    
+    // Validate company if required
+    if (document.getElementById('company_id').required && !document.getElementById('company_id').value) {
+        document.getElementById('company_id').classList.add('is-invalid');
+        isValid = false;
+    } else {
+        document.getElementById('company_id')?.classList.remove('is-invalid');
+    }
+    
+    // Validate unit if required
+    if (document.getElementById('unit_id').required && !document.getElementById('unit_id').value) {
+        document.getElementById('unit_id').classList.add('is-invalid');
+        isValid = false;
+    } else {
+        document.getElementById('unit_id')?.classList.remove('is-invalid');
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Validation Error',
+            text: 'Please complete all required fields correctly.',
+            confirmButtonColor: '#1E4D6F'
+        });
+    }
+});
+
+// NIC input formatting
+document.getElementById('nic')?.addEventListener('input', function() {
+    let value = this.value.toUpperCase();
+    if (value.length > 12) {
+        value = value.substring(0, 12);
+    }
+    this.value = value;
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleRoleFields();
+    
+    // Flash messages from backend
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E4D6F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

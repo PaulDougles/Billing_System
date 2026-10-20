@@ -1,0 +1,155 @@
+/* ========================================
+   TIMELINE.CSS - Workflow Timeline Styles
+   ======================================== */
+
+.workflow-timeline {
+    margin: 20px 0;
+}
+
+.timeline-modern {
+    position: relative;
+    padding: 0;
+}
+
+.timeline-modern:before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.timeline-item-modern {
+    position: relative;
+    display: flex;
+    margin-bottom: 0;
+    padding: 16px 0 16px 60px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: var(--transition-smooth);
+}
+
+.timeline-item-modern:hover {
+    background-color: #f8f9fa;
+}
+
+.timeline-item-modern:last-child {
+    border-bottom: none;
+}
+
+/* Timeline Icons */
+.timeline-icon-submitted { background: linear-gradient(135deg, #0d6efd, #0a58ca); }
+.timeline-icon-approved { background: linear-gradient(135deg, #198754, #157347); }
+.timeline-icon-rejected { background: linear-gradient(135deg, #dc3545, #bb2d3b); }
+.timeline-icon-pending { background: linear-gradient(135deg, #ffc107, #ffca2c); color: #000 !important; }
+.timeline-icon-resubmitted { background: linear-gradient(135deg, #fd7e14, #e9690e); }
+.timeline-icon-invoice { background: linear-gradient(135deg, #0dcaf0, #0aa2c4); }
+.timeline-icon-updated { background: linear-gradient(135deg, #6c757d, #5c636a); }
+.timeline-icon-info { background: linear-gradient(135deg, #6c757d, #5c636a); }
+
+.timeline-icon-submitted,
+.timeline-icon-approved,
+.timeline-icon-rejected,
+.timeline-icon-pending,
+.timeline-icon-resubmitted,
+.timeline-icon-invoice,
+.timeline-icon-updated,
+.timeline-icon-info {
+    position: absolute;
+    left: 12px;
+    top: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.timeline-item-modern:hover [class^="timeline-icon"] {
+    transform: scale(1.05);
+}
+
+.timeline-content-modern {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    transition: var(--transition-smooth);
+}
+
+/* Timeline Alternate (Legacy Support) */
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 70px;
+}
+
+.timeline-badge {
+    position: absolute;
+    left: 15px;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1;
+}
+
+.timeline-badge i {
+    font-size: 1.2rem;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.timeline-header {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+/* Change Details */
+.change-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 8px;
+}
+
+.change-details summary {
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.change-details summary:hover {
+    color: #0d6efd;
+}

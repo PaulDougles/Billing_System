@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Ready for Finance Review</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 20px 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; margin: 10px 0; }
+        .status-pending { background-color: #2196F3; color: white; }
+        .status-approved { background-color: #4CAF50; color: white; }
+        .status-rejected { background-color: #f44336; color: white; }
+        .status-info { background-color: #d1dadc; color: rgb(29, 28, 28); }
+        .btn { display: inline-block; padding: 12px 24px; margin: 20px 0; background: #2c3e50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        .btn:hover { opacity: 0.9; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .details-table td { padding: 8px; border-bottom: 1px solid #eee; }
+        .details-table td:first-child { font-weight: bold; width: 35%; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; border-top: 1px solid #eee; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Invoice System</h1>
+        <p>Time-based Billing Platform</p>
+    </div>
+    <div class="content">
+<h2>Hello {{ finance_controller.first_name }} {{ finance_controller.last_name }},</h2>
+
+<p>A service entry has been approved by Head of IT and is ready for your review.</p>
+
+<div class="status-badge status-approved">
+    <strong>Approved by Head of IT</strong>
+</div>
+
+<h3>Service Details:</h3>
+<table class="details-table">
+    <tr>
+        <td>Company:</td>
+        <td><strong>{{ company.name if company else 'N/A' }}</strong></td>
+    </tr>
+    <tr>
+        <td>Submitted By:</td>
+        <td><strong>{{ bu_user.full_name }}</strong></td>
+    </tr>
+    <tr>
+        <td>Approved By (Head of IT):</td>
+        <td><strong>{{ head_of_it.full_name if head_of_it else 'N/A' }}</strong></td>
+    </tr>
+    <tr>
+        <td>Approved Date:</td>
+        <td>{{ service.head_approved_at.strftime('%Y-%m-%d %H:%M') if service.head_approved_at else 'N/A' }}</td>
+    </tr>
+    <tr>
+        <td>Description:</td>
+        <td>{{ service.service_description }}</td>
+    </tr>
+    <tr>
+        <td>Total Amount:</td>
+        <td><strong style="color: #28a745;">Rs {{ "%.2f"|format(service.total_amount) }}</strong></td>
+    </tr>
+</table>
+
+{% if service.head_approval_comment %}
+<div class="status-badge status-info">
+    <strong>Head of IT Comment:</strong><br>
+    {{ service.head_approval_comment }}
+</div>
+{% endif %}
+<div>
+<a href="{{ review_url }}" class="btn">Review Service</a>
+</div>
+
+    </div>
+    <div class="footer">
+        <p>This is an automated message from Invoice System. Please do not reply to this email.</p>
+        <p>&copy; 2024 Invoice System. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

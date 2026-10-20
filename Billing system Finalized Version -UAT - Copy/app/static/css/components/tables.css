@@ -1,0 +1,77 @@
+/* ========================================
+   TABLES.CSS - Table Styles
+   ======================================== */
+
+.data-table {
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.data-table th {
+    background: #F8FAFE;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    border-bottom: 2px solid #E2E8F0;
+}
+
+.data-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #E2E8F0;
+    vertical-align: middle;
+}
+
+.data-table tr:hover td {
+    background: #F8FAFE;
+}
+
+/* Resource Table */
+.resource-table-container {
+    background: #F8FAFE;
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+}
+
+.resource-table {
+    width: 100%;
+    margin: 0;
+}
+
+.resource-table th {
+    background: #E2E8F0;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.75rem 1rem;
+    color: #1E293B;
+}
+
+.resource-table td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    font-size: 0.85rem;
+    background: white;
+}
+
+.resource-table tbody tr:hover td {
+    background: #F8FAFE;
+}
+
+.resource-table tfoot td {
+    background: #F1F5F9;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+}
+
+/* Tfoot Total */
+.tfoot-total td {
+    border-top: 2px solid #E2E8F0;
+    background-color: #F8FAFE;
+    font-weight: 600;
+}
+
+/* Batch Footer */
+.batch-footer {
+    background: #F8FAFE;
+    border-top: 1px solid #E2E8F0;
+}

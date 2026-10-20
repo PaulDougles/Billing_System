@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert.alert-dismissible, .alert.alert-success, .alert.alert-danger, .alert-info {
+        display: none !important;
+    }
+    .form-card {
+        border-radius: 32px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+    }
+    .form-header {
+        background: linear-gradient(135deg, #D97706 0%, #EA8C2B 100%);
+        padding: 1.5rem;
+    }
+    .form-control, .form-select {
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.75rem 1rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #D97706;
+        box-shadow: 0 0 0 3px rgba(217,119,6,0.1);
+    }
+    .form-check-input:checked {
+        background-color: #D97706;
+        border-color: #D97706;
+    }
+    .admin-access-card {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #f59e0b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-warning bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-pencil-square fs-2 text-warning"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: #0B2B40;">Edit User</h1>
+                    <p class="text-secondary-emphasis mt-1">Update user details for {{ user.full_name }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Users
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center" data-aos="fade-up">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <div class="form-header text-white">
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-person-gear me-2"></i> Edit User: {{ user.full_name }}</h5>
+                    <small>Update user information and role assignments</small>
+                </div>
+                <div class="p-4 p-lg-5">
+                    <form method="POST" id="editUserForm" novalidate>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Employee ID *</label>
+                                <input type="text" class="form-control" id="employee_id" name="employee_id" value="{{ user.employee_id }}" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">NIC *</label>
+                                <input type="text" class="form-control" id="nic" name="nic" value="{{ user.nic }}" required maxlength="12">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Role *</label>
+                                <select class="form-select" id="role" name="role" required onchange="toggleRoleFields()">
+                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    <option value="super_admin" {% if user.role == 'super_admin' %}selected{% endif %}>Super Admin</option>
+                                    <option value="bu_user" {% if user.role == 'bu_user' %}selected{% endif %}>BU Team User</option>
+                                    <option value="supervisor" {% if user.role == 'supervisor' %}selected{% endif %}>Supervisor</option>
+                                    <option value="head_of_it" {% if user.role == 'head_of_it' %}selected{% endif %}>Head of IT</option>
+                                    <option value="record_assistant" {% if user.role == 'record_assistant' %}selected{% endif %}>Record Assistant</option>
+                                    <option value="finance_controller" {% if user.role == 'finance_controller' %}selected{% endif %}>Finance Controller</option>
+                                    <option value="payment_company_user" {% if user.role == 'payment_company_user' %}selected{% endif %}>Company Payment Team User</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Admin Access Section (only shown for Finance Controller) -->
+                            <div id="adminAccessSection" class="col-12" style="display: {% if user.role == 'finance_controller' %}block{% else %}none{% endif %};">
+                                <div class="card border-0 admin-access-card rounded-4 p-4 mt-2">
+                                    <h6 class="fw-semibold mb-3">
+                                        <i class="bi bi-shield-lock me-2 text-warning"></i>
+                                        Admin Access Configuration
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="has_admin_access" name="has_admin_access" 
+                                               value="true" style="width: 3em; height: 1.5em;"
+                                               {% if user.has_admin_access %}checked{% endif %}>
+                                        <label class="form-check-label fw-semibold ms-2" for="has_admin_access">
+                                            Grant Admin Access to this Finance Controller
+                                        </label>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        When enabled, this user can choose to log in as either Finance Controller or Admin.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="companyField" class="col-12" style="display: {% if user.role in ['supervisor', 'head_of_it', 'payment_company_user', 'record_assistant'] %}block{% else %}none{% endif %};">
+                                <label class="form-label fw-semibold">Company *</label>
+                                <select class="form-select" id="company_id" name="company_id">
+                                    <option value="">Select Company</option>
+                                    {% for company in companies %}
+                                    <option value="{{ company.id }}" {% if user.company_id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Required for Supervisor, Head of IT, Record Assistant and Payment Team User roles</small>
+                            </div>
+                            
+                            <div id="teamField" class="col-12" style="display: {% if user.role == 'bu_user' %}block{% else %}none{% endif %};">
+                                <label class="form-label fw-semibold">Team *</label>
+                                <select class="form-select" id="team_id" name="team_id">
+                                    <option value="">Select Team</option>
+                                    {% for unit in units %}
+                                    <option value="{{ unit.id }}" {% if user.unit_id == unit.id %}selected{% endif %}>{{ unit.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="alert alert-info rounded-4 border-0 bg-info bg-opacity-10">
+                                    <i class="bi bi-shield-lock me-2"></i>
+                                    <strong>Secure Authentication:</strong> This system uses OTP-based login. No password stored.
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-warning w-100 py-3 rounded-pill fw-semibold">
+                                    <i class="bi bi-save2 me-2"></i> Update User
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function toggleRoleFields() {
+    const role = document.getElementById('role').value;
+    const companyRoles = ['supervisor', 'head_of_it', 'payment_company_user', 'record_assistant'];
+    const adminAccessSection = document.getElementById('adminAccessSection');
+    
+    // Show/hide company field
+    document.getElementById('companyField').style.display = companyRoles.includes(role) ? 'block' : 'none';
+    
+    // Show/hide team field
+    document.getElementById('teamField').style.display = role === 'bu_user' ? 'block' : 'none';
+    
+    // Show/hide admin access section (only for finance controller)
+    if (adminAccessSection) {
+        adminAccessSection.style.display = role === 'finance_controller' ? 'block' : 'none';
+    }
+    
+    // Set required attributes
+    document.getElementById('company_id').required = companyRoles.includes(role);
+    document.getElementById('team_id').required = role === 'bu_user';
+}
+
+function validateNIC(nic) { 
+    return /^[0-9]{9}[VX]$/i.test(nic) || /^[0-9]{12}$/.test(nic); 
+}
+
+document.getElementById('editUserForm')?.addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Validate required fields
+    ['first_name', 'last_name', 'employee_id'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) { 
+            el.classList.add('is-invalid'); 
+            isValid = false; 
+        } else {
+            el.classList.remove('is-invalid');
+        }
+    });
+    
+    // Validate email
+    const email = document.getElementById('email');
+    if (!email.value.trim() || !/^[^\s@]+@([^\s@]+\.)+[^\s@]+$/.test(email.value)) {
+        email.classList.add('is-invalid'); 
+        isValid = false;
+    } else {
+        email.classList.remove('is-invalid');
+    }
+    
+    // Validate NIC
+    const nic = document.getElementById('nic');
+    if (!validateNIC(nic.value)) { 
+        nic.classList.add('is-invalid'); 
+        isValid = false;
+    } else {
+        nic.classList.remove('is-invalid');
+    }
+    
+    // Validate company if required
+    if (document.getElementById('company_id').required && !document.getElementById('company_id').value) {
+        document.getElementById('company_id').classList.add('is-invalid');
+        isValid = false;
+    } else {
+        document.getElementById('company_id')?.classList.remove('is-invalid');
+    }
+    
+    // Validate team if required
+    if (document.getElementById('team_id').required && !document.getElementById('team_id').value) {
+        document.getElementById('team_id').classList.add('is-invalid');
+        isValid = false;
+    } else {
+        document.getElementById('team_id')?.classList.remove('is-invalid');
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
+        Swal.fire({ 
+            icon: 'warning', 
+            title: 'Validation Error', 
+            text: 'Please fill all required fields correctly.', 
+            confirmButtonColor: '#D97706' 
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const nicInput = document.getElementById('nic');
+    nicInput?.addEventListener('input', function() {
+        let val = this.value.toUpperCase();
+        if (val.length > 12) val = val.substring(0, 12);
+        this.value = val;
+        validateNIC(val) ? this.classList.remove('is-invalid') : this.classList.add('is-invalid');
+    });
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({ 
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}', 
+                    title: '{{ category|title }}', 
+                    text: {{ message|tojson }}, 
+                    confirmButtonColor: '#D97706' 
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

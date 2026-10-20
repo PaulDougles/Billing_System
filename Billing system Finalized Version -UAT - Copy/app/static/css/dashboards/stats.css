@@ -1,0 +1,87 @@
+/* ========================================
+   DASHBOARDS/STATS.CSS - Statistics Cards
+   ======================================== */
+
+/* Stat Card Base */
+.stat-card {
+    transition: var(--transition-smooth);
+    border-radius: 24px;
+    overflow: hidden;
+    border: none;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+/* Gradient Stat Cards */
+.stat-card.bg-gradient-success {
+    background: var(--bg-success);
+}
+
+.stat-card.bg-gradient-warning {
+    background: var(--bg-warning);
+}
+
+.stat-card.bg-gradient-danger {
+    background: var(--bg-danger);
+}
+
+.stat-card.bg-gradient-info {
+    background: var(--bg-info);
+}
+
+.stat-card.bg-gradient-primary {
+    background: var(--bg-active);
+}
+
+/* Stats Card Small */
+.stat-card-small {
+    background: white;
+    border-radius: var(--border-radius-md);
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid #E2E8F0;
+}
+
+/* Stat Card Content */
+.stat-card .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #64748B;
+    letter-spacing: 0.5px;
+}
+
+.stat-card .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    line-height: 1.2;
+}
+
+/* Comparison Indicators */
+.comparison-positive {
+    color: var(--accent-success);
+}
+
+.comparison-negative {
+    color: var(--accent-danger);
+}
+
+/* Resource Bar */
+.resource-bar {
+    background: #E2E8F0;
+    border-radius: 40px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.resource-bar-fill {
+    background: var(--navy-mid);
+    height: 100%;
+    border-radius: 40px;
+    transition: width 0.3s ease;
+}

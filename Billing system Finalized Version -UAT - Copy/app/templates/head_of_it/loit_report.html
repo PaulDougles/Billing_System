@@ -1,0 +1,884 @@
+{% extends "base.html" %}
+
+{% block title %}LOIT Report - {{ company.name }}{% endblock %}
+
+{% block extra_css %}
+
+<style>
+    .stat-card {
+        transition: all 0.2s ease;
+        border-radius: 24px;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(10, 37, 64, 0.12);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+    }
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%);
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    }
+    
+    .card-header-custom {
+        background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%);
+        padding: 1rem 1.5rem;
+        border-radius: 20px 20px 0 0 !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+        padding: 0.75rem;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    .table tfoot td {
+        font-weight: 600;
+        background-color: #F8FAFE;
+        border-top: 2px solid #E2E8F0;
+    }
+    
+    .btn-info {
+        background: #2C7DA0;
+        border: none;
+        border-radius: 40px;
+        padding: 6px 16px;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .btn-info:hover {
+        background: #1E6A8A;
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%);
+        border: none;
+        border-radius: 40px;
+        padding: 8px 24px;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(30, 58, 95, 0.3);
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 40px;
+        padding: 6px 16px;
+        font-size: 0.8rem;
+    }
+
+    .amount-cb    { color: #059669; font-weight: 600; }
+    .amount-sb    { color: #D97706; font-weight: 600; }
+    .amount-lolc  { color: #7C3AED; font-weight: 600; }
+    .amount-total { color: #1E3A5F; font-weight: 700; }
+    
+    .dashboard-header-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-approved { background: #D1FAE5; color: #065F46; }
+    .status-pending  { background: #FEF3C7; color: #92400E; }
+    .status-rejected { background: #FEE2E2; color: #991B1B; }
+    
+    .modal-header-custom {
+        background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%);
+        padding: 1rem 1.5rem;
+        border-radius: 20px 20px 0 0 !important;
+    }
+
+    /* ================================================
+       REDUCED STATISTICS CARDS SECTION ONLY
+       ================================================ */
+    
+    .stat-card .p-4 {
+        padding: 0.75rem 1.25rem !important;
+    }
+    .stat-card .p-3 {
+        padding: 0.5rem 0.75rem !important;
+    }
+    .stat-card .text-uppercase {
+        font-size: 0.6rem !important;
+        letter-spacing: 0.03em;
+    }
+    .stat-card h2.display-6 {
+        font-size: 1.2rem !important;
+    }
+    .stat-card .fs-3 {
+        font-size: 1.2rem !important;
+    }
+    .stat-card .gap-2 {
+        gap: 0.3rem !important;
+    }
+    .stat-card .mt-1 {
+        margin-top: 0.15rem !important;
+    }
+    .stat-card .mb-0 {
+        margin-bottom: 0 !important;
+    }
+    .stat-card .rounded-3 {
+        border-radius: 10px !important;
+    }
+    .stat-card .p-3.bg-white {
+        padding: 0.4rem !important;
+    }
+
+    .row.g-4 {
+        --bs-gutter-y: 0.5rem !important;
+        --bs-gutter-x: 0.75rem !important;
+    }
+    .row.g-4 > * {
+        padding-top: calc(var(--bs-gutter-y) * 0.5) !important;
+        padding-right: calc(var(--bs-gutter-x) * 0.5) !important;
+        padding-left: calc(var(--bs-gutter-x) * 0.5) !important;
+    }
+
+    .mb-4 {
+        margin-bottom: 0.75rem !important;
+    }
+
+    /* ================================================
+       PAGINATION STYLES
+       ================================================ */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .pagination-info {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    .pagination-buttons {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+    
+    .pagination-buttons .btn {
+        min-width: 80px;
+        border-radius: 40px;
+        font-size: 0.8rem;
+        padding: 5px 16px;
+    }
+    
+    .pagination-buttons .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .page-indicator {
+        padding: 0 15px;
+        font-weight: 600;
+        color: #1E3A5F;
+        font-size: 0.85rem;
+    }
+    
+    .entries-per-page {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .entries-per-page select {
+        width: 70px;
+        border-radius: 12px;
+        padding: 4px 8px;
+        border: 1px solid #E2E8F0;
+        font-size: 0.8rem;
+    }
+
+    /* Description cell hover in modal table */
+    #serviceDetailsBody .desc-cell {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        word-break: break-word;
+        white-space: normal;
+    }
+    #serviceDetailsBody .desc-cell:hover {
+        background-color: #e8f0fe;
+    }
+
+    #serviceDetailsBody .table td:nth-child(1) {
+        white-space: normal;
+        word-break: break-word;
+    }
+    #serviceDetailsBody .table td:nth-child(2) {
+        white-space: normal;
+        word-break: break-word;
+    }
+    #serviceDetailsBody .table td:nth-child(3),
+    #serviceDetailsBody .table td:nth-child(4),
+    #serviceDetailsBody .table td:nth-child(5),
+    #serviceDetailsBody .table td:nth-child(6),
+    #serviceDetailsBody .table td:nth-child(7),
+    #serviceDetailsBody .table td:nth-child(8),
+    #serviceDetailsBody .table td:nth-child(9),
+    #serviceDetailsBody .table td:nth-child(10) {
+        white-space: nowrap;
+    }
+    #serviceDetailsBody .table th {
+        white-space: nowrap;
+    }
+
+    .quantity-badge {
+        display: inline-block;
+        background: #E2E8F0;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="dashboard-header-icon">
+                    <i class="bi bi-receipt fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: #0A2540;">LOIT Report</h1>
+                    <p class="text-secondary-emphasis mt-1">{{ company.name }} | {{ month_name }} {{ selected_year }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('head_of_it.export_loit_report_pdf') }}?month={{ selected_month }}&year={{ selected_year }}"
+               class="btn btn-primary rounded-pill px-4">
+                <i class="bi bi-file-pdf me-2"></i> Export PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="filter-section p-4 mb-4" data-aos="fade-up">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label class="form-label fw-semibold text-secondary mb-1"><i class="bi bi-calendar-month me-1"></i>Month</label>
+                <select name="month" class="form-select rounded-pill" style="width: 120px;">
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-semibold text-secondary mb-1"><i class="bi bi-calendar me-1"></i>Year</label>
+                <select name="year" class="form-select rounded-pill" style="width: 100px;">
+                    {% for y in range(2020, 2031) %}
+                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-funnel me-2"></i> Filter
+                </button>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('head_of_it.loit_report') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-repeat me-2"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-2 mb-3" data-aos="fade-up">
+        <div class="col-md-4">
+            <div class="stat-card bg-gradient-success text-white p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-uppercase small fw-semibold opacity-75" style="font-size: 0.6rem;">LOIT Chargeback</span>
+                        <h2 class="fw-bold mb-0 mt-0" style="font-size: 1.2rem;">Rs {{ "{:,.2f}".format(total_cb|default(0)) }}</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-3 p-2">
+                        <i class="bi bi-cash-stack" style="font-size: 1.2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-gradient-warning text-white p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-uppercase small fw-semibold opacity-75" style="font-size: 0.6rem;">LOIT Showback</span>
+                        <h2 class="fw-bold mb-0 mt-0" style="font-size: 1.2rem;">Rs {{ "{:,.2f}".format(total_sb|default(0)) }}</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-3 p-2">
+                        <i class="bi bi-graph-up" style="font-size: 1.2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-gradient-primary text-white p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-uppercase small fw-semibold opacity-75" style="font-size: 0.6rem;">LOIT Total Chargeback</span>
+                        <h2 class="fw-bold mb-0 mt-0" style="font-size: 1.2rem;">Rs {{ "{:,.2f}".format(total_loit|default(0)) }}</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-3 p-2">
+                        <i class="bi bi-calculator" style="font-size: 1.2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Details Table with Pagination -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-header-custom text-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-table fs-5"></i>
+                    <h5 class="mb-0 fw-semibold">Service Details</h5>
+                    <span class="badge bg-light text-dark ms-2" id="totalRecordsBadge">{{ services|length }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="servicesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Date</th>
+                            <th>Unit</th>
+                            <th>BU User</th>
+                            <th>Description</th>
+                            <th class="text-end">LOIT Chargeback</th>
+                            <th class="text-end">LOIT Showback</th>
+                            <th class="text-end">LOIT Total</th>
+                            <th class="text-center pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="servicesTableBody">
+                        {% for s in services %}
+                        <tr data-service-id="{{ s.service_id }}" style="display: none;">
+                            <td class="ps-4 text-nowrap">{{ s.service_date.strftime('%Y-%m-%d') if s.service_date else 'N/A' }}</td>
+                            <td>{{ s.unit_name or 'N/A' }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ s.bu_user_name or 'N/A' }}</div>
+                                <small class="text-muted">{{ s.employee_id or '' }}</small>
+                            </td>
+                            <td style="max-width: 280px;">
+                                {{ s.description[:60] if s.description else 'N/A' }}
+                                {% if s.description and s.description|length > 60 %}...{% endif %}
+                            </td>
+                            <td class="text-end amount-cb">Rs {{ "{:,.2f}".format(s.loit_cb or 0) }}</td>
+                            <td class="text-end amount-sb">Rs {{ "{:,.2f}".format(s.loit_sb or 0) }}</td>
+                            <td class="text-end amount-total fw-bold">Rs {{ "{:,.2f}".format((s.loit_cb or 0) + (s.loit_sb or 0)) }}</td>
+                            <td class="text-center pe-4">
+                                <button class="btn btn-info rounded-pill px-3" onclick="viewServiceDetails({{ s.service_id }})" title="View Details">
+                                    <i class="bi bi-eye me-1"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr id="noResultsRow">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-2 mb-0">No services found for the selected period</p>
+                                <small>Try changing the month/year filter</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if services %}
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="4" class="ps-4 fw-bold">TOTAL:</td>
+                            <td class="text-end fw-bold text-success">Rs {{ "{:,.2f}".format(total_cb|default(0)) }}</td>
+                            <td class="text-end fw-bold" style="color: #D97706;">Rs {{ "{:,.2f}".format(total_sb|default(0)) }}</td>
+                            <td class="text-end fw-bold text-primary">Rs {{ "{:,.2f}".format(total_loit|default(0)) }}</td>
+                            <td class="pe-2"></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div class="pagination-container">
+                <div class="entries-per-page">
+                    <span class="text-muted small">Show:</span>
+                    <select id="entriesPerPage" class="form-select form-select-sm" onchange="changeEntriesPerPage()">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span class="text-muted small">entries</span>
+                </div>
+                
+                <div class="pagination-info" id="paginationInfo">
+                    Showing <span id="startEntry">0</span> to <span id="endEntry">0</span> of <span id="totalEntries">0</span> entries
+                </div>
+                
+                <div class="pagination-buttons">
+                    <button class="btn btn-outline-secondary btn-sm" id="prevPageBtn" onclick="prevPage()" disabled>
+                        <i class="bi bi-chevron-left"></i> Previous
+                    </button>
+                    <span class="page-indicator" id="pageIndicator">Page 1 of 1</span>
+                    <button class="btn btn-outline-secondary btn-sm" id="nextPageBtn" onclick="nextPage()" disabled>
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Details Modal -->
+<div class="modal fade" id="serviceDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95%; width: 1300px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header-custom text-white border-0 p-4">
+                <h5 class="modal-title fw-semibold"><i class="bi bi-file-text me-2"></i> Service Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="serviceDetailsBody" style="max-height: 70vh; overflow-y: auto;">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Loading service details...</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light p-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary rounded-pill px-4" onclick="viewWorkflowFromModal()">
+                    <i class="bi bi-clock-history me-2"></i> View Workflow
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+let currentServiceId = null;
+
+// ============================================================
+// GLOBAL MAP — stores full description text by key
+// ============================================================
+window._resDescMap = {};
+
+// ============================================================
+// PAGINATION VARIABLES
+// ============================================================
+let currentPage = 1;
+let entriesPerPage = 10;
+let allRows = [];
+let filteredRows = [];
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+function escapeHtml(text) {
+    if (!text) return "";
+    return String(text).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+}
+
+function formatCurrency(amount) {
+    return 'Rs ' + parseFloat(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ============================================================
+// DESCRIPTION POPUP — reads full text from JS map
+// ============================================================
+function showDescriptionPopup(resKey) {
+    const entry = window._resDescMap[resKey];
+    if (!entry) return;
+
+    Swal.fire({
+        title: '<i class="bi bi-file-text me-2"></i> ' + escapeHtml(entry.name),
+        html: `<div style="text-align: left; max-height: 400px; overflow-y: auto;">
+                    <strong>Description:</strong><br>
+                    <div class="mt-2 p-3 bg-light rounded" style="word-break: break-word; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                        ${escapeHtml(entry.description)}
+                    </div>
+               </div>`,
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#1E3A5F',
+        width: '600px'
+    });
+}
+
+// ============================================================
+// PAGINATION FUNCTIONS
+// ============================================================
+function initPagination() {
+    const rows = document.querySelectorAll('#servicesTableBody tr:not(#noResultsRow)');
+    allRows = Array.from(rows);
+    
+    // Apply filters if any
+    applyFilters();
+}
+
+function applyFilters() {
+    // For now, no filters on this page, just show all rows
+    filteredRows = allRows;
+    updatePagination();
+}
+
+function updatePagination() {
+    const totalFiltered = filteredRows.length;
+    const totalPages = Math.ceil(totalFiltered / entriesPerPage) || 1;
+    
+    // Ensure current page is within bounds
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    
+    const startIndex = (currentPage - 1) * entriesPerPage;
+    const endIndex = Math.min(startIndex + entriesPerPage, totalFiltered);
+    
+    // Hide all rows first
+    allRows.forEach(row => row.style.display = 'none');
+    
+    // Show only rows for current page
+    for (let i = startIndex; i < endIndex; i++) {
+        if (filteredRows[i]) {
+            filteredRows[i].style.display = '';
+        }
+    }
+    
+    // Update pagination info
+    document.getElementById('startEntry').textContent = totalFiltered > 0 ? startIndex + 1 : 0;
+    document.getElementById('endEntry').textContent = endIndex;
+    document.getElementById('totalEntries').textContent = totalFiltered;
+    document.getElementById('pageIndicator').textContent = `Page ${currentPage} of ${totalPages}`;
+    
+    // Update button states
+    document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+    document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+    
+    // Show/hide no results row
+    const noResultsRow = document.getElementById('noResultsRow');
+    if (noResultsRow) {
+        noResultsRow.style.display = totalFiltered === 0 ? '' : 'none';
+    }
+}
+
+function changeEntriesPerPage() {
+    entriesPerPage = parseInt(document.getElementById('entriesPerPage').value);
+    currentPage = 1;
+    updatePagination();
+}
+
+function nextPage() {
+    const totalFiltered = filteredRows.length;
+    const totalPages = Math.ceil(totalFiltered / entriesPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        updatePagination();
+    }
+}
+
+function prevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        updatePagination();
+    }
+}
+
+// ============================================================
+// VIEW WORKFLOW
+// ============================================================
+function viewWorkflow(serviceId) {
+    window.location.href = `/api/workflow/view/${serviceId}`;
+}
+
+function viewWorkflowFromModal() {
+    if (currentServiceId) {
+        window.location.href = `/api/workflow/view/${currentServiceId}`;
+    }
+}
+
+// ============================================================
+// VIEW SERVICE DETAILS
+// ============================================================
+async function viewServiceDetails(serviceId) {
+    currentServiceId = serviceId;
+    const modalBody = document.getElementById('serviceDetailsBody');
+    modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading service details...</p></div>';
+    const modal = new bootstrap.Modal(document.getElementById('serviceDetailsModal'));
+    modal.show();
+
+    try {
+        const response = await fetch(`/api/service-items/${serviceId}`);
+        const result = await response.json();
+
+        if (result.success) {
+            const item = result.service_item;
+            let resourcesHtml = '';
+
+            let totalLoitChargeback = 0;
+            let totalLoitShowback   = 0;
+            let totalLolcShowback   = 0;
+
+            if (item.resources && item.resources.length > 0) {
+                resourcesHtml = `
+                    <div class="mt-4">
+                        <h6 class="fw-semibold"><i class="bi bi-box-seam me-2 text-primary"></i>Resource Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle" style="min-width: 900px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Description</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-end">LOIT CB Rate</th>
+                                        <th class="text-end">LOIT CB Amount</th>
+                                        <th class="text-end">LOIT SB Rate</th>
+                                        <th class="text-end">LOIT SB Amount</th>
+                                        <th class="text-end">Showback Rate</th>
+                                        <th class="text-end">Showback Amount</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                let resourceIndex = 0;
+
+                for (const r of item.resources) {
+                    const qty = r.quantity || r.hours || 0;
+                    const uom = r.uom || 'units';
+
+                    const loitChargebackRate = r.loit_chargeback_rate || r.chargeback_rate || 0;
+                    const loitShowbackRate   = r.loit_showback_rate   || 0;
+                    const lolcShowbackRate   = r.lolc_showback_rate   || r.showback_rate   || 0;
+
+                    const loitChargebackAmount = qty * loitChargebackRate;
+                    const loitShowbackAmount   = qty * loitShowbackRate;
+                    const lolcShowbackAmount   = qty * lolcShowbackRate;
+                    const totalAmount          = loitChargebackAmount + loitShowbackAmount + lolcShowbackAmount;
+
+                    totalLoitChargeback += loitChargebackAmount;
+                    totalLoitShowback   += loitShowbackAmount;
+                    totalLolcShowback   += lolcShowbackAmount;
+
+                    const resourceName    = r.name        || '';
+                    const descriptionText = r.description || item.description || '';
+
+                    const resKey = `res_${serviceId}_${resourceIndex}`;
+                    window._resDescMap[resKey] = {
+                        name:        resourceName,
+                        description: descriptionText
+                    };
+                    resourceIndex++;
+
+                    const shortDescription = descriptionText.length > 50
+                        ? descriptionText.substring(0, 47) + '...'
+                        : descriptionText;
+
+                    const shortName = resourceName.length > 25
+                        ? resourceName.substring(0, 22) + '...'
+                        : resourceName;
+
+                    resourcesHtml += `
+                        <tr>
+                            <td style="word-break: break-word; white-space: normal;">
+                                <strong title="${escapeHtml(resourceName)}">${escapeHtml(shortName)}</strong>
+                            </td>
+                            <td class="desc-cell"
+                                title="Click to view full description"
+                                onclick="showDescriptionPopup('${resKey}')">
+                                <i class="bi bi-file-text me-1 text-info"></i>${escapeHtml(shortDescription)}
+                                ${descriptionText.length > 50 ? '<span class="text-primary small ms-1"><i class="bi bi-eye"></i> click</span>' : ''}
+                            </td>
+                            <td class="text-center"><span class="badge bg-primary">${qty} ${escapeHtml(uom)}</span></td>
+                            <td class="text-end">${formatCurrency(loitChargebackRate)}</td>
+                            <td class="text-end amount-cb">${formatCurrency(loitChargebackAmount)}</td>
+                            <td class="text-end">${formatCurrency(loitShowbackRate)}</td>
+                            <td class="text-end amount-sb">${formatCurrency(loitShowbackAmount)}</td>
+                            <td class="text-end">${formatCurrency(lolcShowbackRate)}</td>
+                            <td class="text-end amount-lolc">${formatCurrency(lolcShowbackAmount)}</td>
+                            <td class="text-end fw-bold text-primary">${formatCurrency(totalAmount)}</td>
+                        </tr>
+                    `;
+                }
+
+                resourcesHtml += `
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-bold">Resource Totals:</td>
+                                        <td class="text-end fw-bold amount-cb">${formatCurrency(totalLoitChargeback)}</td>
+                                        <td></td>
+                                        <td class="text-end fw-bold amount-sb">${formatCurrency(totalLoitShowback)}</td>
+                                        <td></td>
+                                        <td class="text-end fw-bold amount-lolc">${formatCurrency(totalLolcShowback)}</td>
+                                        <td class="text-end fw-bold text-primary">${formatCurrency(totalLoitChargeback + totalLoitShowback + totalLolcShowback)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resourcesHtml = '<div class="alert alert-info rounded-3 mt-3">No resources recorded for this service.</div>';
+            }
+
+            const loitChargebackTotal = item.loit_chargeback_total || totalLoitChargeback || item.chargeback_total || 0;
+            const loitShowbackTotal   = item.loit_showback_total   || totalLoitShowback   || 0;
+            const lolcShowbackTotal   = item.lolc_showback_total   || totalLolcShowback   || item.showback_total || 0;
+            const loitTotal           = loitChargebackTotal + loitShowbackTotal;
+            const grandTotal          = loitTotal + lolcShowbackTotal;
+
+            modalBody.innerHTML = `
+                <div class="card border-0 shadow-sm rounded-3 mb-3">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Submission Date</small>
+                                <div>${item.submission_date || 'N/A'}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Company</small>
+                                <div class="fw-semibold">${escapeHtml(item.company_name)}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">BU User</small>
+                                <div>${escapeHtml(item.bu_user?.full_name || 'Unknown')}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Unit</small>
+                                <div>${escapeHtml(item.bu_user?.team_name || 'N/A')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3 g-3">
+                    <div class="col-md-3">
+                        <div class="alert alert-success rounded-3 text-center py-2 mb-0">
+                            <small class="fw-semibold text-uppercase" style="font-size: 0.75rem;">LOIT Chargeback</small>
+                            <h5 class="mt-1 mb-0 fw-bold">${formatCurrency(loitChargebackTotal)}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert alert-warning rounded-3 text-center py-2 mb-0">
+                            <small class="fw-semibold text-uppercase" style="font-size: 0.75rem;">LOIT Showback</small>
+                            <h5 class="mt-1 mb-0 fw-bold">${formatCurrency(loitShowbackTotal)}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert" style="background: #EDE9FE; border-radius: 12px; text-align: center; padding: 0.5rem; border: 1px solid #DDD6FE;">
+                            <small class="fw-semibold text-uppercase" style="font-size: 0.75rem; color: #6D28D9;">Showback</small>
+                            <h5 class="mt-1 mb-0 fw-bold" style="color: #6D28D9;">${formatCurrency(lolcShowbackTotal)}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert alert-primary rounded-3 text-center py-2 mb-0">
+                            <small class="fw-semibold text-uppercase" style="font-size: 0.75rem;">LOIT Total</small>
+                            <h5 class="mt-1 mb-0 fw-bold">${formatCurrency(loitTotal)}</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary rounded-3 text-center mt-3 py-2">
+                    <strong style="font-size: 0.85rem;" class="text-uppercase">Grand Total</strong>
+                    <h4 class="mt-1 mb-0 fw-bold text-dark">${formatCurrency(grandTotal)}</h4>
+                </div>
+
+                ${resourcesHtml}
+
+                ${item.head_approval_comment ? `
+                <div class="alert alert-info rounded-3 mt-3">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    <strong>Head of IT Comment:</strong>
+                    <p class="mt-2 mb-0">${escapeHtml(item.head_approval_comment)}</p>
+                </div>` : ''}
+
+                ${item.finance_approval_comment ? `
+                <div class="alert alert-info rounded-3 mt-3">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    <strong>Finance Controller Comment:</strong>
+                    <p class="mt-2 mb-0">${escapeHtml(item.finance_approval_comment)}</p>
+                </div>` : ''}
+            `;
+
+            if (typeof convertUTCToLocal === 'function') convertUTCToLocal();
+
+        } else {
+            modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details: ' + escapeHtml(result.error || 'Unknown error') + '</div>';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        modalBody.innerHTML = '<div class="alert alert-danger rounded-3">Error loading service details. Please try again.</div>';
+    }
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize pagination
+    initPagination();
+
+    // Flash messages handling
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

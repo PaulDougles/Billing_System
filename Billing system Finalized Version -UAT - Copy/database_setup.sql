@@ -1,0 +1,362 @@
+-- ============================================================
+-- INVOICE SYSTEM - COMPLETE PRODUCTION DATABASE SETUP
+-- ============================================================
+
+
+
+-- 3.1 COMPANIES TABLE
+CREATE TABLE companies (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    code VARCHAR(20) UNIQUE,
+    address VARCHAR(200),
+    phone VARCHAR(20),
+    email VARCHAR(120),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.2 USERS TABLE
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(120) NOT NULL UNIQUE,
+    employee_id VARCHAR(50) NOT NULL UNIQUE,
+    nic VARCHAR(20) NOT NULL UNIQUE,
+    company_id INTEGER REFERENCES companies(id),
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    unit_id INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    otp_code VARCHAR(6),
+    otp_expiry TIMESTAMP,
+    otp_attempts INTEGER DEFAULT 0,
+    has_admin_access BOOLEAN DEFAULT FALSE,
+    preferred_role VARCHAR(50)
+);
+
+-- 3.3 UNITS TABLE
+CREATE TABLE units (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(200),
+    supervisor_id INTEGER REFERENCES users(id),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Add foreign key to users table
+ALTER TABLE users ADD CONSTRAINT fk_users_unit FOREIGN KEY (unit_id) REFERENCES units(id);
+
+-- 3.4 UNIT_COMPANIES (Many-to-Many)
+CREATE TABLE unit_companies (
+    unit_id INTEGER REFERENCES units(id) ON DELETE CASCADE,
+    company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
+    PRIMARY KEY (unit_id, company_id)
+);
+
+-- 3.5 UNIT_MEMBERS
+CREATE TABLE unit_members (
+    id SERIAL PRIMARY KEY,
+    unit_id INTEGER NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- 3.6 TIME_ENTRIES
+CREATE TABLE time_entries (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unit_id INTEGER REFERENCES units(id),
+    week_number INTEGER,
+    year INTEGER,
+    is_locked BOOLEAN DEFAULT FALSE,
+    service_date DATE,
+    status VARCHAR(20) DEFAULT 'draft',
+    is_billable BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.7 SERVICE_ITEMS
+CREATE TABLE service_items (
+    id SERIAL PRIMARY KEY,
+    time_entry_id INTEGER NOT NULL REFERENCES time_entries(id) ON DELETE CASCADE,
+    company_id INTEGER NOT NULL REFERENCES companies(id),
+    service_description TEXT NOT NULL,
+    resources JSON DEFAULT '[]',
+    total_amount NUMERIC(10, 2) DEFAULT 0,
+    chargeback_total NUMERIC(15, 2) DEFAULT 0,
+    showback_total NUMERIC(15, 2) DEFAULT 0,
+    
+    -- Supervisor approval
+    supervisor_approval_status VARCHAR(20) DEFAULT 'pending',
+    supervisor_comment TEXT,
+    supervisor_approved_by INTEGER REFERENCES users(id),
+    supervisor_approved_at TIMESTAMP,
+    supervisor_rejected_by INTEGER REFERENCES users(id),
+    supervisor_rejected_at TIMESTAMP,
+    
+    -- Head of IT approval
+    head_approval_status VARCHAR(20) DEFAULT 'pending',
+    head_approval_comment TEXT,
+    head_approved_by INTEGER REFERENCES users(id),
+    head_approved_at TIMESTAMP,
+    head_rejected_by INTEGER REFERENCES users(id),
+    head_rejected_at TIMESTAMP,
+    
+    -- Finance Controller approval
+    finance_approval_status VARCHAR(20) DEFAULT 'pending',
+    finance_approval_comment TEXT,
+    finance_approved_by INTEGER REFERENCES users(id),
+    finance_approved_at TIMESTAMP,
+    finance_rejected_by INTEGER REFERENCES users(id),
+    finance_rejected_at TIMESTAMP,
+    
+    -- Payment & Invoice
+    assigned_payment_team VARCHAR(50),
+    invoice_generated BOOLEAN DEFAULT FALSE,
+    invoice_generated_at TIMESTAMP,
+    invoice_generated_by INTEGER REFERENCES users(id),
+    invoice_number VARCHAR(50),
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.8 RESOURCE_TYPES
+CREATE TABLE resource_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    category VARCHAR(50),
+    unit_id INTEGER NOT NULL REFERENCES units(id),
+    tax_applied BOOLEAN DEFAULT FALSE,
+    tax_company_name VARCHAR(50),
+    base_cost NUMERIC(15, 2) DEFAULT 0,
+    loit_chargeback NUMERIC(15, 2) DEFAULT 0,
+    loit_showback NUMERIC(15, 2) DEFAULT 0,
+    chargeback_rate NUMERIC(15, 2) DEFAULT 0,
+    showback_rate NUMERIC(15, 2) DEFAULT 0,
+    showback_applied BOOLEAN DEFAULT FALSE,
+    unit_of_measure VARCHAR(50),
+    document_required BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.9 DOCUMENTS
+CREATE TABLE documents (
+    id SERIAL PRIMARY KEY,
+    company_id INTEGER NOT NULL REFERENCES companies(id),
+    service_item_id INTEGER REFERENCES service_items(id),
+    resource_id VARCHAR(100),
+    uploaded_by INTEGER NOT NULL REFERENCES users(id),
+    original_filename VARCHAR(255) NOT NULL,
+    file_data BYTEA NOT NULL,
+    file_path VARCHAR(500),
+    file_size INTEGER DEFAULT 0,
+    file_type VARCHAR(100) NOT NULL,
+    version INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.10 ACTIVITY_LOGS
+CREATE TABLE activity_logs (
+    id SERIAL PRIMARY KEY,
+    time_entry_id INTEGER NOT NULL REFERENCES time_entries(id) ON DELETE CASCADE,
+    service_item_id INTEGER REFERENCES service_items(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    action VARCHAR(50) NOT NULL,
+    status_from VARCHAR(50),
+    status_to VARCHAR(50),
+    details JSON,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.11 NOTIFICATIONS
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    time_entry_id INTEGER NOT NULL REFERENCES time_entries(id) ON DELETE CASCADE,
+    notification_type VARCHAR(50) NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP
+);
+
+-- 3.12 SYSTEM_AUDITS
+CREATE TABLE system_audits (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    user_email VARCHAR(120),
+    user_role VARCHAR(50),
+    action_type VARCHAR(50) NOT NULL,
+    action_category VARCHAR(30) NOT NULL,
+    target_type VARCHAR(50),
+    target_id INTEGER,
+    target_name VARCHAR(200),
+    details JSON,
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(500),
+    status VARCHAR(20) DEFAULT 'success',
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.13 MONTHLY_BATCHES
+CREATE TABLE monthly_batches (
+    id SERIAL PRIMARY KEY,
+    company_id INTEGER NOT NULL REFERENCES companies(id),
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    batch_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'pending',
+    sent_to_head_at TIMESTAMP,
+    head_approved_at TIMESTAMP,
+    head_rejected_at TIMESTAMP
+);
+
+-- 3.14 MONTHLY_BATCH_ENTRIES
+CREATE TABLE monthly_batch_entries (
+    id SERIAL PRIMARY KEY,
+    batch_id INTEGER NOT NULL REFERENCES monthly_batches(id) ON DELETE CASCADE,
+    time_entry_id INTEGER NOT NULL REFERENCES time_entries(id),
+    week_number INTEGER NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending'
+);
+
+-- 3.15 MONTHLY_MASTER_INVOICES
+CREATE TABLE monthly_master_invoices (
+    id SERIAL PRIMARY KEY,
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    invoice_number VARCHAR(50) NOT NULL UNIQUE,
+    invoice_pdf BYTEA,
+    pdf_filename VARCHAR(255),
+    generated_by INTEGER REFERENCES users(id),
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_amount NUMERIC(15, 2) DEFAULT 0,
+    period_start DATE,
+    period_end DATE
+);
+
+-- 3.16 SYSTEM_SETTINGS
+CREATE TABLE system_settings (
+    id SERIAL PRIMARY KEY,
+    setting_key VARCHAR(100) NOT NULL UNIQUE,
+    setting_value TEXT NOT NULL,
+    description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.17 TAX_FEE_CONFIG
+CREATE TABLE tax_fee_config (
+    id SERIAL PRIMARY KEY,
+    handling_fee_percent NUMERIC(5, 2) DEFAULT 0 NOT NULL,
+    finance_fee_percent NUMERIC(5, 2) DEFAULT 0 NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES users(id)
+);
+
+-- ============================================================
+-- STEP 4: CREATE INDEXES FOR PERFORMANCE
+-- ============================================================
+
+-- Users
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_employee_id ON users(employee_id);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_company_id ON users(company_id);
+CREATE INDEX idx_users_unit_id ON users(unit_id);
+
+-- Time Entries
+CREATE INDEX idx_time_entries_user_id ON time_entries(user_id);
+CREATE INDEX idx_time_entries_unit_id ON time_entries(unit_id);
+CREATE INDEX idx_time_entries_service_date ON time_entries(service_date);
+CREATE INDEX idx_time_entries_status ON time_entries(status);
+
+-- Service Items
+CREATE INDEX idx_service_items_time_entry_id ON service_items(time_entry_id);
+CREATE INDEX idx_service_items_company_id ON service_items(company_id);
+CREATE INDEX idx_service_items_head_approval_status ON service_items(head_approval_status);
+CREATE INDEX idx_service_items_finance_approval_status ON service_items(finance_approval_status);
+CREATE INDEX idx_service_items_supervisor_approval_status ON service_items(supervisor_approval_status);
+CREATE INDEX idx_service_items_invoice_number ON service_items(invoice_number);
+
+-- Documents
+CREATE INDEX idx_documents_company_id ON documents(company_id);
+CREATE INDEX idx_documents_service_item_id ON documents(service_item_id);
+CREATE INDEX idx_documents_resource_id ON documents(resource_id);
+
+-- Activity Logs
+CREATE INDEX idx_activity_logs_time_entry_id ON activity_logs(time_entry_id);
+CREATE INDEX idx_activity_logs_user_id ON activity_logs(user_id);
+CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at);
+
+-- Monthly Batches
+CREATE INDEX idx_monthly_batches_company_year_month ON monthly_batches(company_id, year, month);
+
+-- ============================================================
+-- STEP 5: INSERT DEFAULT DATA
+-- ============================================================
+
+-- System Settings
+INSERT INTO system_settings (setting_key, setting_value, description) VALUES
+('auto_submit_day', '26', 'Day of month to auto-submit to Head of IT'),
+('auto_submit_time', '01:00', 'Time to auto-submit (24hr format)'),
+('weeks_per_month', '4', 'Number of weeks in a month'),
+('week_lock_days', '7', 'Days after which week is locked'),
+('week_start_day', 'Monday', 'First day of the week'),
+('head_review_deadline_days', '5', 'Days Head of IT has to review')
+ON CONFLICT (setting_key) DO NOTHING;
+
+-- Tax Config
+INSERT INTO tax_fee_config (handling_fee_percent, finance_fee_percent) VALUES (0.0, 0.0)
+ON CONFLICT DO NOTHING;
+
+-- Companies
+INSERT INTO companies (name, code, is_active) VALUES
+('LOLC Technologies', 'LOLC-TECH', TRUE),
+('LOLC Finance PLC', 'LOLC-FIN', TRUE)
+ON CONFLICT (name) DO NOTHING;
+
+-- Units
+INSERT INTO units (name, description, is_active) VALUES
+('Database Unit', 'Manages database operations and optimizations', TRUE),
+('Intelligence Unit', 'Handles business intelligence and analytics', TRUE),
+('DevOps Unit', 'Manages deployment and infrastructure', TRUE)
+ON CONFLICT (name) DO NOTHING;
+
+-- Admin User
+INSERT INTO users (
+    email, employee_id, nic, company_id, first_name, last_name, 
+    role, is_verified, is_active
+) VALUES (
+    'douglasp@lolctech.com', 'ADMIN001', '200011801748', 
+    (SELECT id FROM companies WHERE name = 'LOLC Technologies' LIMIT 1),
+    'Admin', 'User', 'admin', TRUE, TRUE
+)
+ON CONFLICT (email) DO NOTHING;
+
+-- ============================================================
+-- STEP 6: VERIFY SETUP
+-- ============================================================
+
+SELECT '✅ Database setup complete!' AS status;
+SELECT 'Companies: ' || COUNT(*) FROM companies;
+SELECT 'Units: ' || COUNT(*) FROM units;
+SELECT 'Users: ' || COUNT(*) FROM users;
+SELECT 'System Settings: ' || COUNT(*) FROM system_settings;

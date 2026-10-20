@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-card {
+        border-radius: 28px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, #0A2540 0%, #1E3A5F 100%);
+        padding: 2rem;
+        text-align: center;
+        color: white;
+        position: relative;
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 3rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .info-row {
+        display: flex;
+        padding: 1rem 0;
+        border-bottom: 1px solid #E2E8F0;
+    }
+    
+    .info-label {
+        width: 140px;
+        font-weight: 600;
+        color: #0A2540;
+    }
+    
+    .info-value {
+        flex: 1;
+        color: #334155;
+    }
+    
+    .badge-lg {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        border-radius: 40px;
+    }
+    
+    .action-card {
+        border-radius: 20px;
+        border: 1px solid #E2E8F0;
+        transition: all 0.2s;
+    }
+    
+    .action-card:hover {
+        border-color: #CFE2F0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-person-circle fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: #0A2540;">My Profile</h1>
+                    <p class="text-secondary-emphasis mt-1">View and manage your account information</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center" data-aos="fade-up">
+        <div class="col-lg-8">
+            <!-- Profile Information Card -->
+            <div class="profile-card card mb-4">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <h3 class="mb-1 fw-bold">{{ user.full_name }}</h3>
+                    <p class="mb-0 opacity-75">{{ user.email }}</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="info-row">
+                        <div class="info-label">Employee ID</div>
+                        <div class="info-value">{{ user.employee_id }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Full Name</div>
+                        <div class="info-value">{{ user.full_name }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Company</div>
+                        <div class="info-value">{{ user.company or '—' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Role</div>
+                        <div class="info-value">
+                            <span class="badge-lg {% if user.role == 'admin' %}bg-danger{% elif user.role == 'finance_controller' %}bg-success{% else %}bg-primary{% endif %} text-white">
+                                {{ user.role|replace('_', ' ')|title }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Account Status</div>
+                        <div class="info-value">
+                            {% if user.is_active %}
+                                <span class="badge bg-success rounded-pill px-3 py-1">
+                                    <i class="bi bi-check-circle me-1"></i> Active
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill px-3 py-1">
+                                    <i class="bi bi-pause-circle me-1"></i> Inactive
+                                </span>
+                            {% endif %}
+                            {% if user.is_verified %}
+                                <span class="badge bg-info rounded-pill px-3 py-1 ms-1">
+                                    <i class="bi bi-envelope-check me-1"></i> Verified
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning rounded-pill px-3 py-1 ms-1">
+                                    <i class="bi bi-envelope-exclamation me-1"></i> Unverified
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Member Since</div>
+                        <div class="info-value">{{ user.created_at.strftime('%B %d, %Y') }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Last Login</div>
+                        <div class="info-value">
+                            {% if user.last_login %}
+                                {{ user.last_login.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Actions Card -->
+            {% if user.role == 'admin' %}
+            <div class="action-card p-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-warning bg-opacity-10 rounded-3 p-2">
+                        <i class="bi bi-shield-lock fs-3 text-warning"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-semibold">Administrator Actions</h5>
+                        <p class="text-muted small mb-0">Manage system users and configurations</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <a href="{{ url_for('admin.list_users') }}" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-people me-2"></i> Manage Users
+                    </a>
+                    <a href="{{ url_for('admin.manage_companies') }}" class="btn btn-outline-primary rounded-pill px-4">
+                        <i class="bi bi-building me-2"></i> Manage Companies
+                    </a>
+                    <a href="{{ url_for('admin.system_settings') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-gear me-2"></i> System Settings
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

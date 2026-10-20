@@ -1,0 +1,555 @@
+<!-- manage_units.html -->
+{% extends "base.html" %}
+
+{% block title %}Manage Units - Invoice System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========================================
+       CENTRALIZED COLOR VARIABLES
+       Change these values to update colors globally
+    ======================================== */
+    :root {
+        /* Primary Navy Blue Theme */
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        
+        /* Secondary / Accent Colors */
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        
+        /* Background & Status Colors */
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --bg-inactive: linear-gradient(135deg, #2C3E50 0%, #1A252F 100%);
+        --bg-hover: rgba(30, 58, 95, 0.05);
+        
+        /* Card & Surface Colors */
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        --card-shadow-hover: 0 12px 28px rgba(10, 37, 64, 0.12);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    /* Hide standard Bootstrap alerts */
+    .alert.alert-dismissible, .alert.alert-success, .alert.alert-danger, .alert-info {
+        display: none !important;
+    }
+    
+    /* Stat Cards */
+    .stat-card {
+        background: white;
+        border-radius: 24px;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow-hover);
+    }
+    
+    /* Unit Cards */
+    .unit-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    
+    .unit-card:hover {
+        transform: translateY(-6px);
+    }
+    
+    /* Filter Section */
+    .filter-section {
+        background: white;
+        border-radius: 28px;
+        border: none;
+        box-shadow: var(--card-shadow);
+    }
+    
+    /* Badges */
+    .company-badge {
+        background: #F0F4F8;
+        border-radius: var(--border-radius-pill);
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--navy-deep);
+    }
+    
+    /* Avatar */
+    .avatar-initials {
+        width: 36px;
+        height: 36px;
+        background: var(--bg-active);
+        color: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    /* Card Header - Active Unit */
+    .card-header.bg-primary {
+        background: var(--bg-active) !important;
+        border-bottom: none;
+    }
+    
+    /* Card Header - Inactive Unit */
+    .card-header.bg-secondary {
+        background: var(--bg-inactive) !important;
+        border-bottom: none;
+    }
+    
+    /* Button Styles */
+    .btn-outline-primary {
+        border-color: var(--navy-mid);
+        color: var(--navy-mid);
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--navy-mid);
+        border-color: var(--navy-mid);
+        color: white;
+    }
+    
+    .btn-outline-info {
+        border-color: var(--accent-info);
+        color: var(--accent-info);
+    }
+    
+    .btn-outline-info:hover {
+        background: var(--accent-info);
+        border-color: var(--accent-info);
+        color: white;
+    }
+    
+    .btn-outline-warning {
+        border-color: var(--accent-warning);
+        color: var(--accent-warning);
+    }
+    
+    .btn-outline-warning:hover {
+        background: var(--accent-warning);
+        border-color: var(--accent-warning);
+        color: white;
+    }
+    
+    .btn-outline-success {
+        border-color: var(--accent-success);
+        color: var(--accent-success);
+    }
+    
+    .btn-outline-success:hover {
+        background: var(--accent-success);
+        border-color: var(--accent-success);
+        color: white;
+    }
+    
+    .btn-outline-danger {
+        border-color: var(--accent-danger);
+        color: var(--accent-danger);
+    }
+    
+    .btn-outline-danger:hover {
+        background: var(--accent-danger);
+        border-color: var(--accent-danger);
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+    
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    /* Modern Button (Create Unit) */
+    .btn-modern {
+        background: var(--bg-active);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 10px 24px;
+        color: white;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(10, 37, 64, 0.3);
+        color: white;
+    }
+    
+    /* Modal Header */
+    .modal-header.bg-info {
+        background: var(--bg-active) !important;
+    }
+    
+    /* Form Controls */
+    .form-control:focus, .form-select:focus {
+        border-color: var(--navy-mid);
+        box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+    }
+    
+    .form-control.rounded-pill, .form-select.rounded-pill {
+        border-radius: var(--border-radius-pill) !important;
+    }
+    
+    /* Text Colors */
+    .text-primary {
+        color: var(--navy-mid) !important;
+    }
+    
+    .bg-primary.bg-opacity-10 {
+        background: rgba(30, 58, 95, 0.1) !important;
+    }
+    
+    /* Card Footer */
+    .card-footer.bg-white {
+        background: white;
+    }
+    
+    /* Modal Button */
+    .btn-info {
+        background: var(--bg-active);
+        border: none;
+    }
+    
+    .btn-info:hover {
+        background: var(--navy-light);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-diagram-3 fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">Manage Units</h1>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('admin.create_unit_page') }}" class="btn btn-modern shadow-lg">
+                <i class="bi bi-plus-circle-fill me-2"></i> Create New Unit
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="row g-3 mb-4" data-aos="fade-up">
+        <div class="col-md-4">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Total Units</span>
+                    <h3 class="fw-bold mb-0">{{ units|length }}</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-diagram-3 fs-4 text-primary"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Active Units</span>
+                    <h3 class="fw-bold mb-0">{{ units|selectattr('is_active')|list|length }}</h3>
+                </div>
+                <div class="bg-success bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-check-circle-fill fs-4 text-success"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase">Total Members</span>
+                    <h3 class="fw-bold mb-0">{{ units|sum(attribute='member_count') }}</h3>
+                </div>
+                <div class="bg-info bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-people-fill fs-4 text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section p-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i> Search</label>
+                <input type="text" id="searchUnit" class="form-control rounded-pill" placeholder="Unit name...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Company</label>
+                <select id="filterCompany" class="form-select rounded-pill">
+                    <option value="">All Companies</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-toggle-on me-1"></i> Status</label>
+                <select id="filterStatus" class="form-select rounded-pill">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary rounded-pill w-100" onclick="clearFilters()">
+                    <i class="bi bi-eraser me-1"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Units Grid -->
+    <div class="row g-4" id="unitsGrid" data-aos="fade-up" data-aos-delay="200">
+        {% for unit in units %}
+        <div class="col-md-6 col-lg-4 unit-card" 
+             data-unit-name="{{ unit.name|lower }}"
+             data-unit-status="{{ 'active' if unit.is_active else 'inactive' }}"
+             data-unit-companies="{% for c in unit.companies %}{{ c.id }},{% endfor %}">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header border-0 py-3 px-4 {% if unit.is_active %}bg-primary text-white{% else %}bg-secondary text-white{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold">
+                            <i class="bi bi-building-gear me-2"></i> {{ unit.name }}
+                        </h5>
+                        <span class="badge bg-white text-dark rounded-pill px-3 py-1">
+                            <i class="bi bi-people me-1"></i> {{ unit.member_count }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Companies -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-building text-muted"></i>
+                            <span class="small fw-semibold text-muted">Assigned Companies</span>
+                            <span class="badge bg-light text-dark rounded-pill">{{ unit.companies|length }}</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for company in unit.companies %}
+                            <span class="company-badge">{{ company.name }}</span>
+                            {% else %}
+                            <span class="text-muted small">No companies assigned</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Supervisor -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-person-check text-muted"></i>
+                            <span class="small fw-semibold text-muted">Supervisor</span>
+                        </div>
+                        {% if unit.supervisor %}
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-initials">
+                                {{ unit.supervisor.first_name[0] }}{{ unit.supervisor.last_name[0] }}
+                            </div>
+                            <div>
+                                <div class="fw-semibold">{{ unit.supervisor.full_name }}</div>
+                                <small class="text-muted">{{ unit.supervisor.email }}</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-muted small"><i class="bi bi-person-x"></i> Not assigned</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Description -->
+                    {% if unit.description %}
+                    <div class="mb-3">
+                        <i class="bi bi-file-text text-muted me-2"></i>
+                        <small class="text-muted">{{ unit.description|truncate(100) }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Created Date -->
+                    <div class="mt-3 pt-2 border-top">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar3 me-1"></i> Created {{ unit.created_at.strftime('%d %b %Y') }}
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 p-4 pt-0">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('admin.edit_unit_page', unit_id=unit.id) }}" class="btn btn-outline-primary rounded-pill flex-grow-1">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+                        <button class="btn btn-outline-info rounded-pill flex-grow-1" onclick="manageMembers({{ unit.id }})">
+                            <i class="bi bi-people me-1"></i> Members
+                        </button>
+                        <form method="POST" action="{{ url_for('admin.toggle_unit', unit_id=unit.id) }}" class="flex-grow-1">
+                            <button type="submit" class="btn {% if unit.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} rounded-pill w-100">
+                                {% if unit.is_active %}
+                                    <i class="bi bi-pause-circle me-1"></i> Deactivate
+                                {% else %}
+                                    <i class="bi bi-play-circle me-1"></i> Activate
+                                {% endif %}
+                            </button>
+                        </form>
+                        {% if unit.member_count == 0 %}
+                        <form method="POST" action="{{ url_for('admin.delete_unit', unit_id=unit.id) }}" 
+                              onsubmit="return confirm('Delete this unit? This action cannot be undone.')" class="flex-grow-1">
+                            <button type="submit" class="btn btn-outline-danger rounded-pill w-100">
+                                <i class="bi bi-trash me-1"></i> Delete
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="modern-card text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <h5 class="mt-3">No Units Found</h5>
+                <p class="text-muted">Create your first unit to get started</p>
+                <a href="{{ url_for('admin.create_unit_page') }}" class="btn btn-modern mt-2">
+                    <i class="bi bi-plus-circle me-2"></i> Create Unit
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Manage Members Modal -->
+<div class="modal fade" id="membersModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <form method="POST" id="membersForm">
+                <div class="modal-header bg-info text-white border-0 rounded-top-4">
+                    <h5 class="modal-title"><i class="bi bi-people-fill me-2"></i> Manage Unit Members</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="membersUnitId" name="unit_id">
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="form-label fw-semibold">Select Team Members</label>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="selectAllMembers()">
+                                    <i class="bi bi-check-all"></i> All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="deselectAllMembers()">
+                                    <i class="bi bi-x-circle"></i> None
+                                </button>
+                            </div>
+                        </div>
+                        <div class="border rounded-3 p-3 bg-light" style="max-height: 400px; overflow-y: auto;">
+                            <div class="row">
+                                {% for user in users if user.role == 'bu_user' %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input members-checkbox" type="checkbox" 
+                                               name="member_ids" value="{{ user.id }}" id="members_{{ user.id }}">
+                                        <label class="form-check-label" for="members_{{ user.id }}">
+                                            <div>
+                                                <strong>{{ user.full_name }}</strong>
+                                                <br><small class="text-muted">{{ user.email }}</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block">Only BU users can be assigned to units</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info rounded-pill px-4"><i class="bi bi-save me-1"></i> Update Members</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+let currentUnitId = null;
+
+function filterUnits() {
+    const searchTerm = document.getElementById('searchUnit').value.toLowerCase();
+    const filterCompany = document.getElementById('filterCompany').value;
+    const filterStatus = document.getElementById('filterStatus').value;
+    const cards = document.querySelectorAll('.unit-card');
+    cards.forEach(card => {
+        let show = true;
+        const unitName = card.getAttribute('data-unit-name');
+        const unitStatus = card.getAttribute('data-unit-status');
+        const unitCompanies = card.getAttribute('data-unit-companies');
+        if (searchTerm && !unitName.includes(searchTerm)) show = false;
+        if (show && filterCompany && !unitCompanies.includes(filterCompany)) show = false;
+        if (show && filterStatus && unitStatus !== filterStatus) show = false;
+        card.style.display = show ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchUnit').value = '';
+    document.getElementById('filterCompany').value = '';
+    document.getElementById('filterStatus').value = '';
+    filterUnits();
+}
+
+document.getElementById('searchUnit')?.addEventListener('keyup', filterUnits);
+document.getElementById('filterCompany')?.addEventListener('change', filterUnits);
+document.getElementById('filterStatus')?.addEventListener('change', filterUnits);
+
+function manageMembers(unitId) {
+    currentUnitId = unitId;
+    document.getElementById('membersUnitId').value = unitId;
+    document.getElementById('membersForm').action = `/admin/units/${unitId}/members`;
+    Swal.fire({ title: 'Loading...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    fetch(`/admin/api/unit-members/${unitId}`)
+        .then(response => response.json())
+        .then(data => {
+            Swal.close();
+            const memberIds = data.member_ids || [];
+            document.querySelectorAll('.members-checkbox').forEach(cb => cb.checked = memberIds.includes(parseInt(cb.value)));
+            new bootstrap.Modal(document.getElementById('membersModal')).show();
+        })
+        .catch(() => { Swal.close(); Swal.fire('Error', 'Failed to load members', 'error'); });
+}
+
+function selectAllMembers() { document.querySelectorAll('.members-checkbox').forEach(cb => cb.checked = true); }
+function deselectAllMembers() { document.querySelectorAll('.members-checkbox').forEach(cb => cb.checked = false); }
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({ icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" }}', title: '{{ category|title }}', text: {{ message|tojson }}, confirmButtonColor: '#1E4D6F' });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

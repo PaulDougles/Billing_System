@@ -1,0 +1,1190 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Service - Invoice System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-warning: #D97706;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .service-item-card {
+        transition: all 0.3s ease;
+        border-radius: var(--border-radius-card);
+        overflow: hidden;
+    }
+    .service-item-card:hover {
+        box-shadow: 0 8px 25px rgba(10, 37, 64, 0.12);
+    }
+    .resource-row {
+        margin-bottom: 8px;
+        padding: 10px;
+        border-radius: 12px;
+        background: white;
+        border: 1px solid #E2E8F0;
+        transition: all 0.2s;
+    }
+    .resource-row:hover {
+        border-color: #94A3B8;
+    }
+    .resource-row.required-doc {
+        border-left: 4px solid #D97706;
+        background: #FFFBEB;
+    }
+    .resource-row.has-doc-cached {
+        border-left: 4px solid #3B82F6;
+        background: #EFF6FF;
+    }
+    .card-header-custom {
+        background: var(--bg-active);
+        padding: 1rem 1.5rem;
+    }
+    .btn-primary, .btn-success {
+        border-radius: var(--border-radius-pill);
+        padding: 8px 24px;
+    }
+    .btn-primary {
+        background: var(--bg-active);
+        border: none;
+    }
+    .btn-primary:hover {
+        background: var(--navy-light);
+        transform: translateY(-1px);
+    }
+    .btn-outline-primary {
+        border-color: var(--navy-mid);
+        color: var(--navy-mid);
+        border-radius: var(--border-radius-pill);
+    }
+    .btn-outline-primary:hover {
+        background: var(--navy-mid);
+        border-color: var(--navy-mid);
+        color: white;
+    }
+    .form-control, .form-select {
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.75rem 1rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--navy-mid);
+        box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+    }
+    .rejection-alert {
+        background: #FEF2F2;
+        border-left: 4px solid #DC2626;
+        border-radius: 16px;
+    }
+    .date-warning {
+        background: #FEF3C7;
+        border-left: 4px solid #D97706;
+        border-radius: 12px;
+        padding: 10px 15px;
+        margin-top: 10px;
+    }
+    .flatpickr-day.disabled {
+        background: #f8f9fa;
+        color: #ccc;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+    .flatpickr-day.disabled:hover {
+        background: #f8f9fa;
+    }
+    .flatpickr-day.today-server {
+        border-color: var(--navy-mid);
+        font-weight: 700;
+    }
+    .flatpickr-day.today-server::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--navy-mid);
+    }
+    .date-range-info {
+        background: #F8FAFC;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin-top: 8px;
+    }
+    .date-range-info .badge {
+        font-size: 0.7rem;
+    }
+    .cycle-info-badge {
+        font-size: 0.7rem;
+        padding: 2px 10px;
+        border-radius: 20px;
+    }
+
+    /* Select2 Custom Styling */
+    .select2-container .select2-selection--single {
+        height: 42px;
+        border-radius: 12px;
+        border-color: #E2E8F0;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 42px;
+        padding-left: 15px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px;
+    }
+    .select2-dropdown {
+        border-radius: 12px;
+        border-color: #E2E8F0;
+    }
+
+    .doc-upload-btn {
+        transition: all 0.2s;
+    }
+    .doc-upload-btn.has-doc-cached {
+        background: #DBEAFE;
+        border-color: #3B82F6;
+        color: #1E40AF;
+    }
+    .doc-upload-btn.has-doc-cached:hover {
+        background: #BFDBFE;
+    }
+    .doc-status-badge {
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 40px;
+        display: inline-block;
+    }
+    .doc-status-required {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    .doc-status-cached {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+    .doc-status-inline {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+    .doc-status-inline .btn {
+        white-space: nowrap;
+    }
+    .cached-doc-indicator {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        background: #DBEAFE;
+        color: #1E40AF;
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-warning bg-opacity-10 rounded-3 p-2">
+                    <i class="bi bi-pencil-square fs-2 text-warning"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">Edit Service</h1>
+                    <p class="text-secondary-emphasis mt-1">Review and resubmit your service entry</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('bu_team.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-left me-2"></i> Back
+                </a>
+                <button type="button" class="btn btn-outline-primary rounded-pill px-4" onclick="saveDraft()">
+                    <i class="bi bi-save me-2"></i> Save Draft
+                </button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="resubmitEntry()">
+                    <i class="bi bi-send me-2"></i> Resubmit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Reason Alert -->
+    {% if service_data.rejection_comment %}
+    <div class="rejection-alert p-4 mb-4" data-aos="fade-up">
+        <div class="d-flex gap-3">
+            <i class="bi bi-exclamation-triangle-fill fs-3 text-danger"></i>
+            <div>
+                <strong class="d-block mb-1">Rejection Reason</strong>
+                <p class="mb-0">{{ service_data.rejection_comment }}</p>
+                <small class="text-muted mt-1 d-block">Please review and make necessary changes before resubmitting</small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Service Date Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4" data-aos="fade-up">
+        <div class="card-header-custom text-white border-0 rounded-top-4">
+            <h5 class="mb-0 fw-semibold"><i class="bi bi-calendar-date me-2"></i> Select Service Date</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Service Date <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="serviceDatePicker" 
+                           placeholder="Select a date">
+                    <div id="dateWarning" class="date-warning" style="display: none;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span id="dateWarningText"></span>
+                    </div>
+                    <small class="text-muted" id="selectedDateDisplay"></small>
+                    <div id="dateRangeInfo" class="date-range-info">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <span id="dateRangeText">Loading date range...</span>
+                    </div>
+                    <div id="cycleInfo" class="mt-2">
+                        <span id="cycleInfoText" class="text-muted small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Service Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 service-item-card" data-aos="fade-up">
+        <div class="card-header bg-light border-0 py-3 px-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 d-flex align-items-center">
+                    <strong class="fs-5 text-nowrap"><i class="bi bi-building me-2"></i>Service</strong>
+                    <div style="width:20px;"></div>
+                    <select class="form-select form-select-sm company-select" id="companySelect" style="width: 250px; margin-left: 10px;">
+                        <option value="">Select Company</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}" {% if service_data.company_id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div id="resources-container">
+                <label class="form-label fw-semibold"><i class="bi bi-box-seam me-1"></i> Resources</label>
+                <p class="text-muted small mb-2">Add a description for each resource type used in this service.</p>
+                <div class="border rounded-3 p-3 bg-light">
+                    <div id="resource-entries"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-2" onclick="addResource()">
+                        <i class="bi bi-plus me-1"></i> Add Resource
+                    </button>
+                </div>
+            </div>
+            
+            <div class="alert alert-info rounded-3 mt-3" id="serviceTotalAlert">
+                <strong><i class="bi bi-calculator me-1"></i> Service Total:</strong>
+                <span id="serviceTotalBreakdown">Rs 0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up">
+        <div class="card-header bg-secondary text-white border-0 rounded-top-4 py-3">
+            <h5 class="mb-0 fw-semibold"><i class="bi bi-calculator me-2"></i> Summary</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <strong class="text-muted">Chargeback Total </strong>
+                        <h3 class="text-primary fw-bold mt-2 mb-0" id="chargebackTotalSummary">Rs 0.00</h3>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <strong class="text-muted">Showback Total </strong>
+                        <h3 class="text-secondary fw-bold mt-2 mb-0" id="showbackTotalSummary">Rs 0.00</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Upload Modal -->
+<div class="modal fade" id="serviceDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-gradient-primary text-white border-0 p-4">
+                <h5 class="modal-title fw-semibold"><i class="bi bi-file-earmark-arrow-up me-2"></i> Upload Document</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="currentDocumentStatus" class="alert alert-secondary mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span id="currentDocumentStatusText">No document selected yet</span>
+                </div>
+                
+                <form id="uploadServiceDocumentForm" enctype="multipart/form-data">
+                    <input type="hidden" id="uploadCompanyId" name="company_id">
+                    <input type="hidden" id="uploadServiceItemId" name="service_item_id">
+                    <div class="mb-3">
+                        <label for="serviceDocFile" class="form-label fw-semibold">Select File</label>
+                        <input class="form-control rounded-3" type="file" id="serviceDocFile" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt">
+                        <small class="text-muted">PDF, Images, Word or Excel files allowed (Max 10MB)</small>
+                    </div>
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-primary rounded-pill py-2" onclick="addDocumentToCache()">
+                            <i class="bi bi-plus-circle me-2"></i> Add Document to Cache
+                        </button>
+                    </div>
+                </form>
+                
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                   
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="removeCachedDocBtn" style="display:none;" onclick="removeCachedDocumentFromModal()">
+                        <i class="bi bi-trash me-1"></i> Remove
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+const serviceData = {{ service_data|tojson }};
+const resourceTypesData = {{ resource_types|tojson }};
+
+let resourceTypes = {};
+let serviceResources = [];
+let selectedServiceDate = serviceData.service_date;
+let flatpickrInstance = null;
+let serverDateRange = null;
+let documentCache = {};
+
+document.addEventListener('DOMContentLoaded', async function() {
+    resourceTypesData.forEach(rt => { resourceTypes[rt.id] = rt; });
+
+    // Initialize Select2 for company dropdown
+    $('#companySelect').select2({
+        width: '250px',
+        placeholder: 'Select Company',
+        allowClear: true
+    }).on('change', function() {
+        updateCompany(this.value);
+    });
+
+    // Fetch date range and initialize date picker
+    await fetchAndInitializeDateRange();
+
+    // Load existing resources
+    if (serviceData.resources && serviceData.resources.length > 0) {
+        serviceData.resources.forEach(r => addResource(r));
+    } else {
+        addResource();
+    }
+});
+
+// ============ DATE RANGE FROM DATABASE ============
+
+async function fetchAndInitializeDateRange() {
+    try {
+        const response = await fetch('/api/date-range', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            serverDateRange = result.data;
+            console.log('📅 Date range from database:', serverDateRange);
+            initializeDatePicker(serverDateRange);
+            updateCycleInfo(serverDateRange);
+        } else {
+            console.error('Error fetching date range:', result.error);
+            initializeDatePicker(null);
+        }
+    } catch (error) {
+        console.error('Error fetching date range:', error);
+        initializeDatePicker(null);
+    }
+}
+
+function updateCycleInfo(rangeData) {
+    const cycleInfo = document.getElementById('cycleInfoText');
+    if (!cycleInfo || !rangeData) return;
+
+    const start = rangeData.cycle_start;
+    const end = rangeData.cycle_end;
+    const autoDay = rangeData.auto_submit_day;
+    const selectable = rangeData.selectable_days || 0;
+
+    const todayDayOfMonth = parseInt(rangeData.server_time.split('-')[2], 10);
+
+    let cycleLabel = '';
+    if (todayDayOfMonth === autoDay) {
+        cycleLabel = '🔴 AUTO-SUBMIT DAY - Today only';
+    } else if (todayDayOfMonth > autoDay) {
+        cycleLabel = '🟢 NEW CYCLE STARTED';
+    } else {
+        cycleLabel = '🟡 CURRENT CYCLE';
+    }
+
+    cycleInfo.innerHTML = `
+        <span class="badge bg-secondary cycle-info-badge">${cycleLabel}</span>
+        <span class="ms-2 text-muted small">
+            Cycle: ${start} to ${end} | 
+            Auto-submit: ${autoDay}th | 
+            <span class="fw-bold">${selectable} days selectable</span>
+        </span>
+    `;
+}
+
+function initializeDatePicker(rangeData = null) {
+    let range;
+    if (rangeData) {
+        range = rangeData;
+    } else {
+        console.warn('Using client-side fallback date calculation');
+        const now = new Date();
+        const toStr = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const autoSubmitDay = 26;
+        const maxPastDays = 14;
+        const todayStr = toStr(now);
+
+        let cycleStart, cycleEnd;
+        if (now.getDate() >= autoSubmitDay) {
+            cycleStart = new Date(now.getFullYear(), now.getMonth(), autoSubmitDay);
+            cycleEnd = (now.getMonth() === 11)
+                ? new Date(now.getFullYear()+1, 0, autoSubmitDay-1)
+                : new Date(now.getFullYear(), now.getMonth()+1, autoSubmitDay-1);
+        } else {
+            cycleStart = (now.getMonth() === 0)
+                ? new Date(now.getFullYear()-1, 11, autoSubmitDay)
+                : new Date(now.getFullYear(), now.getMonth()-1, autoSubmitDay);
+            cycleEnd = new Date(now.getFullYear(), now.getMonth(), autoSubmitDay-1);
+        }
+
+        const rangeStartDate = new Date(now);
+        rangeStartDate.setDate(now.getDate() - (maxPastDays - 1));
+        const cycleStartStr = toStr(cycleStart);
+        const rangeStartStr = toStr(rangeStartDate);
+
+        range = {
+            min_date: cycleStartStr > rangeStartStr ? cycleStartStr : rangeStartStr,
+            max_date: todayStr,
+            default_date: todayStr,
+            cycle_start: cycleStartStr,
+            cycle_end: toStr(cycleEnd),
+            auto_submit_day: autoSubmitDay,
+            max_past_days: maxPastDays,
+            allow_future_dates: false,
+            server_time: todayStr,
+            selectable_days: 0
+        };
+    }
+
+    const minDateStr = range.min_date;
+    const maxDateStr = range.max_date;
+    const todayStr = range.server_time;
+
+    // Check if the existing service date is within range
+    const isExistingDateInRange = selectedServiceDate >= minDateStr && selectedServiceDate <= maxDateStr;
+    const isTodayInRange = todayStr >= minDateStr && todayStr <= maxDateStr;
+    
+    // Use existing date if valid, otherwise use today if valid, otherwise use min
+    let defaultDateStr;
+    if (isExistingDateInRange) {
+        defaultDateStr = selectedServiceDate;
+    } else if (isTodayInRange) {
+        defaultDateStr = todayStr;
+    } else {
+        defaultDateStr = minDateStr;
+    }
+
+    console.log('📅 Date Range:', {
+        minDate: minDateStr,
+        maxDate: maxDateStr,
+        defaultDate: defaultDateStr,
+        existingDate: selectedServiceDate,
+        isExistingDateInRange: isExistingDateInRange,
+        serverToday: todayStr
+    });
+
+    if (flatpickrInstance) {
+        flatpickrInstance.destroy();
+    }
+
+    flatpickrInstance = flatpickr("#serviceDatePicker", {
+        dateFormat: "Y-m-d",
+        minDate: minDateStr,
+        maxDate: maxDateStr,
+        defaultDate: defaultDateStr,
+        onChange: function(selectedDates, dateStr) {
+            if (selectedDates.length > 0) {
+                const isValid = validateSelectedDate(dateStr);
+                if (isValid) {
+                    selectedServiceDate = dateStr;
+                    document.getElementById('selectedDateDisplay').innerHTML = 
+                        `<i class="bi bi-check-circle text-success"></i> Selected: ${dateStr}`;
+                    document.getElementById('dateWarning').style.display = 'none';
+                } else if (flatpickrInstance) {
+                    flatpickrInstance.setDate(defaultDateStr);
+                }
+            }
+        },
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            const d = dayElem.dateObj;
+            const cellDateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+            if (cellDateStr < minDateStr || cellDateStr > maxDateStr) {
+                dayElem.classList.add('flatpickr-disabled');
+                dayElem.style.opacity = '0.5';
+                dayElem.style.cursor = 'not-allowed';
+            }
+            if (cellDateStr === todayStr) {
+                dayElem.classList.add('today-server');
+            }
+        }
+    });
+
+    document.getElementById('selectedDateDisplay').innerHTML = 
+        `<i class="bi bi-check-circle text-success"></i> Selected: ${defaultDateStr}`;
+
+    const rangeInfo = document.getElementById('dateRangeText');
+    if (rangeInfo) {
+        rangeInfo.innerHTML = `
+            <strong>Allowed:</strong> ${minDateStr} to ${maxDateStr}
+            <span class="badge bg-${range.allow_future_dates ? 'success' : 'secondary'} ms-1">
+                ${range.allow_future_dates ? 'Future Allowed' : 'Past Only'}
+            </span>
+            <span class="badge bg-info ms-1">${range.selectable_days || 0} days</span>
+            <br><small class="text-muted">
+                📅 Cycle: ${range.cycle_start} to ${range.cycle_end}
+                <br>
+                🔄 Auto-submit: ${range.auto_submit_day || '26'}th | 
+                📊 Past ${range.max_past_days || 14} days max
+            </small>
+        `;
+    }
+}
+
+function validateSelectedDate(selectedDateStr) {
+    const range = serverDateRange || { 
+        server_time: new Date().toISOString().split('T')[0],
+        min_date: '1970-01-01', max_date: '9999-12-31',
+        cycle_start: '1970-01-01', max_past_days: 14, allow_future_dates: false
+    };
+
+    const todayStr = range.server_time;
+    const minDateStr = range.min_date;
+    const maxDateStr = range.max_date;
+    const cycleStartStr = range.cycle_start;
+    const allowFutureDates = range.allow_future_dates;
+    const maxPastDays = range.max_past_days || 14;
+
+    if (!allowFutureDates && selectedDateStr > todayStr) {
+        document.getElementById('dateWarningText').innerHTML = 
+            `Future dates are not allowed. Please select today or a past date.`;
+        document.getElementById('dateWarning').style.display = 'block';
+        return false;
+    }
+
+    const todayParts = todayStr.split('-').map(Number);
+    const todayLocal = new Date(todayParts[0], todayParts[1]-1, todayParts[2]);
+    const rangeStartLocal = new Date(todayLocal);
+    rangeStartLocal.setDate(todayLocal.getDate() - (maxPastDays - 1));
+    const rangeStartStr = `${rangeStartLocal.getFullYear()}-${String(rangeStartLocal.getMonth()+1).padStart(2,'0')}-${String(rangeStartLocal.getDate()).padStart(2,'0')}`;
+
+    if (selectedDateStr < rangeStartStr) {
+        document.getElementById('dateWarningText').innerHTML = 
+            `You can only select dates from the last ${maxPastDays} days (including today).<br>
+             The earliest allowed date is ${rangeStartStr}.`;
+        document.getElementById('dateWarning').style.display = 'block';
+        return false;
+    }
+
+    if (cycleStartStr && selectedDateStr < cycleStartStr) {
+        document.getElementById('dateWarningText').innerHTML = 
+            `Date is before the current cycle start.<br>
+             The cycle started on ${cycleStartStr}.`;
+        document.getElementById('dateWarning').style.display = 'block';
+        return false;
+    }
+
+    if (selectedDateStr < minDateStr || selectedDateStr > maxDateStr) {
+        document.getElementById('dateWarningText').innerHTML = 
+            `Selected date is outside the allowed range.<br>
+             Allowed: ${minDateStr} to ${maxDateStr}`;
+        document.getElementById('dateWarning').style.display = 'block';
+        return false;
+    }
+
+    document.getElementById('dateWarning').style.display = 'none';
+    return true;
+}
+
+// ============ RESOURCE MANAGEMENT ============
+
+function addResource(resourceData = null) {
+    const resourceId = `res_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const resourceDiv = document.createElement('div');
+    resourceDiv.id = resourceId;
+    resourceDiv.className = 'resource-row mb-2';
+    
+    const isRequired = resourceData ? resourceTypes[resourceData.type]?.document_required : false;
+    const docKey = `edit_${resourceId}`;
+    const hasCachedDoc = documentCache[docKey] ? true : false;
+    
+    let options = '<option value="">Select Resource</option>';
+    Object.values(resourceTypes).forEach(rt => {
+        options += `<option value="${rt.id}" ${resourceData && resourceData.type == rt.id ? 'selected' : ''}>${rt.name}</option>`;
+    });
+
+    resourceDiv.innerHTML = `
+        <div class="row align-items-center g-2">
+            <div class="col-md-3">
+                <select class="form-select form-select-sm resource-type" onchange="updateResourceType('${resourceId}', this.value)">
+                    ${options}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text unit-prefix">Units</span>
+                    <input type="number" class="form-control resource-quantity" 
+                           step="1" min="0" placeholder="Qty" 
+                           value="${resourceData ? (resourceData.quantity || 1) : 1}" 
+                           onchange="updateResourceQuantity('${resourceId}', this.value)">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <textarea class="form-control form-control-sm resource-description" rows="1"
+                          placeholder="Resource description *"
+                          onchange="updateResourceDescription('${resourceId}', this.value)">${resourceData && resourceData.description ? resourceData.description : ''}</textarea>
+            </div>
+            <div class="col-md-2">
+                <span class="small text-muted resource-info">Select type</span>
+            </div>
+            <div class="col-md-2">
+                <div id="${resourceId}-doc-status" class="doc-status-inline" style="cursor: pointer;" onclick="showResourceDocumentUpload('${resourceId}')">
+                    ${hasCachedDoc ? `
+                        <button type="button" class="btn btn-sm btn-success doc-upload-btn has-doc-cached w-100" id="${resourceId}-doc-btn" title="Document cached">
+                            <i class="bi bi-file-earmark-check"></i> Cached
+                        </button>
+                        <div class="small text-truncate text-muted mt-1" title="${documentCache[docKey].filename}">${documentCache[docKey].filename}</div>
+                    ` : `
+                        <button type="button" class="btn btn-sm ${isRequired ? 'btn-outline-warning' : 'btn-outline-primary'} doc-upload-btn w-100" id="${resourceId}-doc-btn" title="Upload Document">
+                            <i class="bi bi-upload"></i> ${isRequired ? 'Required' : 'Upload'}
+                        </button>
+                    `}
+                </div>
+            </div>
+            <div class="col-md-12 col-lg-auto text-end mt-1">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeResource('${resourceId}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>`;
+        
+    document.getElementById('resource-entries').appendChild(resourceDiv);
+    
+    serviceResources.push({
+        id: resourceId,
+        type: resourceData ? resourceData.type : '',
+        quantity: resourceData ? (resourceData.quantity || 1) : 1,
+        description: resourceData ? (resourceData.description || '') : ''
+    });
+
+    if (resourceData) updateResourceType(resourceId, resourceData.type);
+    else updateServiceTotal();
+}
+
+function updateResourceType(resourceId, typeId) {
+    const res = serviceResources.find(r => r.id === resourceId);
+    if (!res) return;
+    res.type = typeId;
+    
+    const rt = resourceTypes[typeId];
+    const row = document.getElementById(resourceId);
+    const docKey = `edit_${resourceId}`;
+    const hasCachedDoc = documentCache[docKey] ? true : false;
+    const docBtn = document.getElementById(`${resourceId}-doc-btn`);
+    
+    if (rt && row) {
+        row.querySelector('.unit-prefix').textContent = rt.unit_of_measure || 'Units';
+        row.querySelector('.resource-quantity').step = rt.allow_fractional ? '0.25' : '1';
+        row.querySelector('.resource-info').innerHTML = `CB: ${rt.chargeback_rate} | SB: ${rt.showback_rate}`;
+        
+        // Handle document required styling
+        if (rt.document_required) {
+            row.classList.add('required-doc');
+        } else {
+            row.classList.remove('required-doc');
+        }
+        
+        if (docBtn) {
+            if (hasCachedDoc) {
+                docBtn.className = 'btn btn-sm btn-success doc-upload-btn has-doc-cached w-100';
+                docBtn.innerHTML = '<i class="bi bi-file-earmark-check"></i> Cached';
+            } else {
+                docBtn.className = `btn btn-sm ${rt.document_required ? 'btn-outline-warning' : 'btn-outline-primary'} doc-upload-btn w-100`;
+                docBtn.innerHTML = `<i class="bi bi-upload"></i> ${rt.document_required ? 'Required' : 'Upload'}`;
+            }
+        }
+    } else if (row) {
+        row.querySelector('.unit-prefix').textContent = 'Units';
+        row.querySelector('.resource-info').innerHTML = 'Select type';
+        if (docBtn) {
+            docBtn.className = 'btn btn-sm btn-outline-primary doc-upload-btn w-100';
+            docBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+        }
+    }
+    updateServiceTotal();
+}
+
+function updateResourceQuantity(resourceId, qty) {
+    const res = serviceResources.find(r => r.id === resourceId);
+    if (res) res.quantity = parseFloat(qty) || 0;
+    updateServiceTotal();
+}
+
+function updateResourceDescription(resourceId, value) {
+    const res = serviceResources.find(r => r.id === resourceId);
+    if (res) res.description = (value || '').trim();
+}
+
+function removeResource(resourceId) {
+    serviceResources = serviceResources.filter(r => r.id !== resourceId);
+    const docKey = `edit_${resourceId}`;
+    delete documentCache[docKey];
+    document.getElementById(resourceId).remove();
+    updateServiceTotal();
+}
+
+function updateCompany(companyId) { 
+    serviceData.company_id = parseInt(companyId); 
+}
+
+function updateServiceTotal() {
+    let cb = 0, sb = 0;
+    serviceResources.forEach(r => {
+        const rt = resourceTypes[r.type];
+        if (rt) {
+            cb += r.quantity * rt.chargeback_rate;
+            sb += r.quantity * rt.showback_rate;
+        }
+    });
+    const total = cb + sb;
+    
+    document.getElementById('serviceTotalBreakdown').innerHTML = `
+        <strong>CB:</strong> Rs ${cb.toFixed(2)} | <strong>SB:</strong> Rs ${sb.toFixed(2)} | <strong>Total:</strong> Rs ${total.toFixed(2)}`;
+    document.getElementById('chargebackTotalSummary').textContent = `Rs ${cb.toFixed(2)}`;
+    document.getElementById('showbackTotalSummary').textContent = `Rs ${sb.toFixed(2)}`;
+    serviceData.total_amount = total;
+}
+
+// ============ DOCUMENT CACHE FUNCTIONS ============
+
+function addDocumentToCache() {
+    const fileInput = document.getElementById('serviceDocFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        Swal.fire('Error', 'Please select a file', 'error');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    if (file.size > 10 * 1024 * 1024) {
+        Swal.fire('Error', 'File size exceeds 10MB limit', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    
+    reader.onload = function(event) {
+        if (window._currentResourceUpload) {
+            const { resourceId, resourceName } = window._currentResourceUpload;
+            const docKey = `edit_${resourceId}`;
+            
+            documentCache[docKey] = {
+                filename: file.name,
+                file_data: event.target.result.split(',')[1],
+                size: file.size,
+                type: file.type,
+                company_id: document.getElementById('uploadCompanyId').value,
+                service_item_id: document.getElementById('uploadServiceItemId').value || null,
+                resource_id: resourceId
+            };
+            
+            updateDocumentStatusUI(resourceId, file.name);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('serviceDocumentModal'));
+            if (modal) modal.hide();
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Document Cached',
+                text: `"${file.name}" will be uploaded when you submit the entry`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+            
+            fileInput.value = '';
+        }
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function updateDocumentStatusUI(resourceId, filename) {
+    const docBtn = document.getElementById(`${resourceId}-doc-btn`);
+    const docStatus = document.getElementById(`${resourceId}-doc-status`);
+    const resourceRow = document.getElementById(resourceId);
+    
+    if (docBtn) {
+        docBtn.className = 'btn btn-sm btn-success doc-upload-btn has-doc-cached w-100';
+        docBtn.innerHTML = '<i class="bi bi-file-earmark-check"></i> Cached';
+        docBtn.title = 'Document cached (will upload on submit)';
+    }
+    if (docStatus) {
+        let filenameDiv = docStatus.querySelector('.doc-filename-inline');
+        if (!filenameDiv) {
+            filenameDiv = document.createElement('div');
+            filenameDiv.className = 'small text-truncate text-muted mt-1 doc-filename-inline';
+            docStatus.appendChild(filenameDiv);
+        }
+        filenameDiv.textContent = filename;
+        filenameDiv.title = filename;
+    }
+    if (resourceRow) {
+        resourceRow.classList.add('has-doc-cached');
+    }
+}
+
+function showResourceDocumentUpload(resourceId) {
+    const resource = serviceResources.find(r => r.id === resourceId);
+    if (!resource) return;
+    
+    const companyId = serviceData.company_id;
+    if (!companyId) {
+        Swal.fire('Warning', 'Please select a company first', 'warning');
+        return;
+    }
+    
+    const rt = resourceTypes[resource.type];
+    if (!rt) {
+        Swal.fire('Warning', 'Please select a resource type first', 'warning');
+        return;
+    }
+    
+    window._currentResourceUpload = {
+        resourceId: resourceId,
+        resourceType: resource.type,
+        resourceName: rt.name
+    };
+    
+    const docKey = `edit_${resourceId}`;
+    const cachedDoc = documentCache[docKey];
+    
+    document.getElementById('uploadCompanyId').value = companyId;
+    document.getElementById('uploadServiceItemId').value = serviceData.id;
+    
+    const modalTitle = document.querySelector('#serviceDocumentModal .modal-title');
+    if (modalTitle) {
+        modalTitle.innerHTML = `<i class="bi bi-file-earmark-arrow-up me-2"></i> Upload Document for: ${rt.name}`;
+    }
+    
+    const statusDiv = document.getElementById('currentDocumentStatus');
+    const statusText = document.getElementById('currentDocumentStatusText');
+    const removeBtn = document.getElementById('removeCachedDocBtn');
+    
+    if (statusDiv && statusText) {
+        if (cachedDoc) {
+            statusDiv.className = 'alert alert-info mb-3';
+            statusText.innerHTML = `
+                <strong>Current document:</strong> ${cachedDoc.filename}
+                <span class="badge bg-warning text-dark ms-2">Pending Upload</span>
+                <br><small class="text-muted">This document will be uploaded when you submit the entry</small>
+            `;
+            if (removeBtn) {
+                removeBtn.style.display = 'inline-block';
+                removeBtn.onclick = function() {
+                    removeCachedDocument(resourceId);
+                };
+            }
+        } else {
+            statusDiv.className = 'alert alert-secondary mb-3';
+            statusText.innerHTML = 'No document selected yet';
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+        }
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('serviceDocumentModal'));
+    modal.show();
+}
+
+function removeCachedDocument(resourceId) {
+    const docKey = `edit_${resourceId}`;
+    delete documentCache[docKey];
+    
+    const docBtn = document.getElementById(`${resourceId}-doc-btn`);
+    const docStatus = document.getElementById(`${resourceId}-doc-status`);
+    const resourceRow = document.getElementById(resourceId);
+    
+    const resource = serviceResources.find(r => r.id === resourceId);
+    const rt = resource ? resourceTypes[resource.type] : null;
+    const isRequired = rt?.document_required || false;
+    
+    if (docBtn) {
+        docBtn.className = `btn btn-sm ${isRequired ? 'btn-outline-warning' : 'btn-outline-primary'} doc-upload-btn w-100`;
+        docBtn.innerHTML = `<i class="bi bi-upload"></i> ${isRequired ? 'Required' : 'Upload'}`;
+        docBtn.title = 'Upload Document';
+    }
+    if (docStatus) {
+        const filenameDiv = docStatus.querySelector('.doc-filename-inline');
+        if (filenameDiv) filenameDiv.remove();
+    }
+    if (resourceRow) {
+        resourceRow.classList.remove('has-doc-cached');
+        if (isRequired) {
+            resourceRow.classList.add('required-doc');
+        }
+    }
+    
+    const statusDiv = document.getElementById('currentDocumentStatus');
+    const statusText = document.getElementById('currentDocumentStatusText');
+    const removeBtn = document.getElementById('removeCachedDocBtn');
+    
+    if (statusDiv && statusText) {
+        statusDiv.className = 'alert alert-secondary mb-3';
+        statusText.innerHTML = 'No document selected yet';
+        if (removeBtn) {
+            removeBtn.style.display = 'none';
+        }
+    }
+    
+    Swal.fire({
+        icon: 'info',
+        title: 'Document Removed',
+        text: 'The cached document has been removed',
+        timer: 1500,
+        showConfirmButton: false
+    });
+}
+
+function removeCachedDocumentFromModal() {
+    if (window._currentResourceUpload) {
+        const { resourceId } = window._currentResourceUpload;
+        removeCachedDocument(resourceId);
+    }
+}
+
+// ============ VALIDATION AND SUBMISSION ============
+
+function validateEntry() {
+    const serviceDateStr = document.getElementById('serviceDatePicker').value;
+    if (!serviceDateStr) { 
+        Swal.fire('Warning', 'Please select a service date', 'warning'); 
+        return false; 
+    }
+    
+    const minDateStr = serverDateRange ? serverDateRange.min_date : '1970-01-01';
+    const maxDateStr = serverDateRange ? serverDateRange.max_date : '9999-12-31';
+    
+    if (serviceDateStr < minDateStr || serviceDateStr > maxDateStr) {
+        Swal.fire('Warning', `Please select a date within the allowed range: ${minDateStr} to ${maxDateStr}`, 'warning');
+        return false;
+    }
+    
+    if (!serviceData.company_id) { 
+        Swal.fire('Warning', 'Please select a company', 'warning'); 
+        return false; 
+    }
+    if (serviceResources.length === 0) { 
+        Swal.fire('Warning', 'Please add at least one resource', 'warning'); 
+        return false; 
+    }
+    for (const r of serviceResources) {
+        if (!r.type) { 
+            Swal.fire('Warning', 'Please select resource type for all resources', 'warning'); 
+            return false; 
+        }
+        if (!r.description || !r.description.trim()) { 
+            Swal.fire('Warning', 'Please enter a description for each resource', 'warning'); 
+            return false; 
+        }
+        if (!r.quantity || r.quantity <= 0) { 
+            Swal.fire('Warning', 'Please enter valid quantity', 'warning'); 
+            return false; 
+        }
+        
+        // Check document required
+        const rt = resourceTypes[r.type];
+        if (rt && rt.document_required) {
+            const docKey = `edit_${r.id}`;
+            if (!documentCache[docKey]) {
+                Swal.fire('Document Required', `Please upload a document for "${rt.name}" resource`, 'warning');
+                return false;
+            }
+        }
+    }
+    serviceData.service_date = serviceDateStr;
+    return true;
+}
+
+async function saveDraft() {
+    if (!validateEntry()) return;
+    
+    const data = {
+        service_item_id: serviceData.id,
+        service_date: serviceData.service_date,
+        company_id: serviceData.company_id,
+        resources: serviceResources.map(r => ({
+            type: r.type,
+            quantity: r.quantity,
+            description: (r.description || '').trim()
+        })),
+        total_amount: serviceData.total_amount
+    };
+    
+    try {
+        const response = await fetch('/api/service-items/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Draft Saved', 
+                text: 'Your changes have been saved', 
+                timer: 2000, 
+                showConfirmButton: false 
+            });
+        } else { 
+            Swal.fire('Error', result.error, 'error'); 
+        }
+    } catch (error) { 
+        Swal.fire('Error', error.message, 'error'); 
+    }
+}
+
+async function resubmitEntry() {
+    if (!validateEntry()) return;
+    
+    const data = {
+        service_item_id: serviceData.id,
+        service_date: serviceData.service_date,
+        company_id: serviceData.company_id,
+        resources: serviceResources.map(r => ({
+            type: r.type,
+            quantity: r.quantity,
+            description: (r.description || '').trim()
+        })),
+        total_amount: serviceData.total_amount
+    };
+    
+    Swal.fire({ 
+        title: 'Resubmitting...', 
+        text: 'Uploading documents...',
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+    });
+    
+    try {
+        // Step 1: Update the service item
+        const response = await fetch('/api/service-items/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error);
+        }
+        
+        // Step 2: Upload cached documents
+        const documentsToUpload = [];
+        for (const [key, doc] of Object.entries(documentCache)) {
+            const resourceId = key.replace('edit_', '');
+            
+            const resource = serviceResources.find(r => r.id === resourceId);
+            if (!resource) continue;
+
+            documentsToUpload.push({
+                company_id: serviceData.company_id,
+                service_item_id: serviceData.id,
+                resource_id: resourceId,
+                filename: doc.filename,
+                file_data: doc.file_data
+            });
+        }
+        
+        if (documentsToUpload.length > 0) {
+            const uploadResponse = await fetch('/api/documents/upload-bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    entry_id: serviceData.entry_id,
+                    documents: documentsToUpload
+                }),
+                credentials: 'same-origin'
+            });
+            const uploadResult = await uploadResponse.json();
+            
+            if (!uploadResult.success) {
+                console.warn('Some documents failed to upload:', uploadResult.errors);
+            }
+        }
+        
+        documentCache = {};
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Resubmitted!',
+            text: `Your service has been resubmitted for approval${documentsToUpload.length > 0 ? ' with ' + documentsToUpload.length + ' document(s)' : ''}`,
+            confirmButtonText: 'OK'
+        }).then(() => { 
+            window.location.href = '/bu-team/dashboard'; 
+        });
+        
+    } catch (error) {
+        Swal.fire('Error', error.message, 'error');
+    }
+}
+
+// ============ INITIALIZATION ============
+document.addEventListener('DOMContentLoaded', function() {
+    // Any additional initialization if needed
+});
+</script>
+{% endblock %}

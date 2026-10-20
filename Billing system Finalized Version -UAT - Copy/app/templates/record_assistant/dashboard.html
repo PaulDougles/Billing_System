@@ -1,0 +1,596 @@
+{% extends "base.html" %}
+
+{% block title %}Record Assistant Dashboard - {{ company_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy-deep: #0A2540;
+        --navy-mid: #1E3A5F;
+        --navy-light: #2C5282;
+        --navy-grad-start: #0A2540;
+        --navy-grad-end: #1E3A5F;
+        --accent-success: #059669;
+        --accent-warning: #D97706;
+        --accent-danger: #DC2626;
+        --accent-info: #2C7DA0;
+        --bg-active: linear-gradient(135deg, var(--navy-grad-start) 0%, var(--navy-grad-end) 100%);
+        --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        --border-radius-card: 20px;
+        --border-radius-pill: 40px;
+    }
+    
+    .stat-card {
+        transition: all 0.2s ease;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    
+    .nav-tabs {
+        border-bottom: 2px solid #E2E8F0;
+        gap: 8px;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 10px 24px;
+        font-weight: 600;
+        color: #475569;
+        transition: all 0.2s;
+    }
+    .nav-tabs .nav-link:hover {
+        background: #F1F5F9;
+        color: var(--navy-mid);
+    }
+    .nav-tabs .nav-link.active {
+        background: var(--bg-active);
+        color: white;
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        background-color: #f8f9fa;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F8FAFE;
+    }
+    
+    .btn-info {
+        background: var(--accent-info);
+        border: none;
+        border-radius: var(--border-radius-pill);
+        padding: 6px 16px;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .btn-info:hover {
+        background: #1E6A8A;
+        transform: translateY(-1px);
+    }
+    
+    .btn-outline-primary {
+        border-color: var(--navy-mid);
+        color: var(--navy-mid);
+        border-radius: var(--border-radius-pill);
+        padding: 6px 16px;
+    }
+    .btn-outline-primary:hover {
+        background: var(--navy-mid);
+        border-color: var(--navy-mid);
+        color: white;
+    }
+    
+    .card-header-custom {
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #0a1f44 0%, #d6d4da 100%);
+    }
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #002b5b 0%, #d6d4da 100%);
+    }
+    .bg-gradient-danger {
+       background: linear-gradient(135deg, #003f88 0%, #d6d4da 100%);
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%);
+    }
+    
+    .unit-avatar {
+        width: 36px;
+        height: 36px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    tr:hover .unit-avatar {
+        background: rgba(30, 58, 95, 0.2);
+        transform: scale(1.05);
+    }
+    
+    .tfoot-total td {
+        border-top: 2px solid #E2E8F0;
+        background-color: #F8FAFE;
+        font-weight: 600;
+    }
+    
+    .bg-opacity-20 {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .dashboard-header-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(30, 58, 95, 0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .read-only-badge {
+        background: #E0E7FF;
+        color: #3730A3;
+        padding: 4px 12px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .no-records-message {
+        background: #FEF3C7;
+        border-left: 4px solid #D97706;
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    {% include 'components/welcome_banner.html' %}
+    
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2">
+        <div data-aos="fade-right">
+            <div class="d-flex align-items-center gap-3">
+                <div class="dashboard-header-icon">
+                    <i class="bi bi-clipboard-check fs-2 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0" style="color: var(--navy-deep);">Record Assistant Dashboard</h1>
+                    <p class="text-secondary-emphasis mt-1">{{ company_name }}</p>
+                </div>
+            </div>
+            <div class="mt-2">
+                <span class="read-only-badge">
+                    <i class="bi bi-eye me-1"></i> Read-Only View | Review Only
+                </span>
+            </div>
+        </div>
+        <div class="mt-3 mt-sm-0" data-aos="fade-left">
+            <a href="{{ url_for('record_assistant.loit_report') }}" class="btn btn-outline-info rounded-pill px-4">
+                <i class="bi bi-graph-up me-2"></i> LOIT Report
+            </a>
+            <button class="btn btn-outline-primary rounded-pill px-4 ms-2" onclick="location.reload()">
+                <i class="bi bi-arrow-repeat me-2"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Month/Year Filter -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4" data-aos="fade-up">
+        <div class="card-body p-3">
+            <form method="GET" class="d-flex flex-wrap gap-3 align-items-end">
+                <div class="flex-grow-1" style="min-width: 150px;">
+                    <label class="form-label fw-semibold text-secondary"><i class="bi bi-calendar-month me-2"></i>Select Month</label>
+                    <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                        {% set months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] %}
+                        {% for i in range(1, 13) %}
+                        <option value="{{ i }}" {% if i == selected_month %}selected{% endif %}>{{ months[i] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex-grow-1" style="min-width: 150px;">
+                    <label class="form-label fw-semibold text-secondary"><i class="bi bi-calendar me-2"></i>Select Year</label>
+                    <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                        {% for y in range(2020, 2031) %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-funnel me-2"></i>Filter
+                </button>
+                <a href="{{ url_for('record_assistant.dashboard') }}" class="btn btn-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+                </a>
+            </form>
+        </div>
+    </div>
+    
+    <!-- No Records Message -->
+    {% if pending_units|length == 0 and approved_units|length == 0 and rejected_units|length == 0 %}
+    <div class="no-records-message mb-4" data-aos="fade-up">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-info-circle-fill fs-3 text-warning"></i>
+            <div>
+                <strong class="d-block">No Records Found</strong>
+                <p class="mb-0">No service records found for {{ month_name }} {{ selected_year }}. Try selecting a different month or year.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistics Cards -->
+<div class="row g-3 mb-4" data-aos="fade-up">
+    <div class="col-md-4">
+        <div class="stat-card bg-gradient-warning text-white p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-uppercase small fw-semibold opacity-75">Pending Services</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-1">
+                        <h2 class="fw-bold mb-0" style="font-size: 2rem;">{{ pending_units|sum(attribute='service_count')|default(0) }}</h2>
+                        <small class="opacity-75">services</small>
+                    </div>
+                    <div class="mt-2">
+                        <small class="opacity-75">Total Amount</small>
+                        <h6 class="mb-0 fw-semibold">Rs {{ "{:,.2f}".format(pending_total|default(0)) }}</h6>
+                    </div>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-3 p-2">
+                    <i class="bi bi-hourglass-split fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card bg-gradient-success text-white p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-uppercase small fw-semibold opacity-75">Approved Services</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-1">
+                        <h2 class="fw-bold mb-0" style="font-size: 2rem;">{{ approved_units|sum(attribute='service_count')|default(0) }}</h2>
+                        <small class="opacity-75">services</small>
+                    </div>
+                    <div class="mt-2">
+                        <small class="opacity-75">Total Amount</small>
+                        <h6 class="mb-0 fw-semibold">Rs {{ "{:,.2f}".format(approved_total|default(0)) }}</h6>
+                    </div>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-3 p-2">
+                    <i class="bi bi-check-circle-fill fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card bg-gradient-danger text-white p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-uppercase small fw-semibold opacity-75">Rejected Services</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-1">
+                        <h2 class="fw-bold mb-0" style="font-size: 2rem;">{{ rejected_units|sum(attribute='service_count')|default(0) }}</h2>
+                        <small class="opacity-75">services</small>
+                    </div>
+                    <div class="mt-2">
+                        <small class="opacity-75">Total Amount</small>
+                        <h6 class="mb-0 fw-semibold">Rs {{ "{:,.2f}".format(rejected_total|default(0)) }}</h6>
+                    </div>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-3 p-2">
+                    <i class="bi bi-x-circle-fill fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="statusTab" role="tablist" data-aos="fade-up">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pending">
+                <i class="bi bi-hourglass-split me-2"></i>Pending 
+                <span class="badge bg-warning text-dark ms-1 rounded-pill">{{ pending_units|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#approved">
+                <i class="bi bi-check-circle me-2"></i>Approved 
+                <span class="badge bg-success ms-1 rounded-pill">{{ approved_units|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#rejected">
+                <i class="bi bi-x-circle me-2"></i>Rejected 
+                <span class="badge bg-danger ms-1 rounded-pill">{{ rejected_units|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="statusTabContent" data-aos="fade-up" data-aos-delay="100">
+        <!-- PENDING UNITS -->
+        <div class="tab-pane fade show active" id="pending">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header-custom bg-gradient-warning text-white">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-hourglass-split fs-5"></i>
+                        <h5 class="mb-0 fw-semibold">Units with Pending Services</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Unit Name</th>
+                                    <th class="text-center">Services</th>
+                                    <th class="text-end">Total Amount (Rs)</th>
+                                    <th class="text-center pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit in pending_units %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="unit-avatar">
+                                                <i class="bi bi-diagram-3 text-warning"></i>
+                                            </div>
+                                            <strong>{{ unit.name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning bg-opacity-15 text-warning rounded-pill px-3 py-1">
+                                            {{ unit.service_count }} Service(s)
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold text-warning">Rs {{ "{:,.2f}".format(unit.total_amount) }}</td>
+                                    <td class="text-center pe-4">
+                                        <a href="{{ url_for('record_assistant.unit_services', unit_id=unit.id) }}?status=pending&month={{ selected_month }}&year={{ selected_year }}" class="btn btn-info rounded-pill px-3">
+                                            <i class="bi bi-eye me-1"></i> View Services
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        <i class="bi bi-check-circle fs-3"></i>
+                                        <p class="mt-2 mb-0">No units with pending services</p>
+                                        <small>All services have been processed</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% if pending_units %}
+                            <tfoot class="tfoot-total">
+                                <tr>
+                                    <td colspan="2" class="text-end fw-bold ps-4">Total:</td>
+                                    <td class="text-end fw-bold text-warning pe-4">Rs {{ "{:,.2f}".format(pending_total) }}</td>
+                                    <td class="pe-4"></td>
+                                </tr>
+                            </tfoot>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APPROVED UNITS -->
+        <div class="tab-pane fade" id="approved">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header-custom bg-gradient-success text-white">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle fs-5"></i>
+                        <h5 class="mb-0 fw-semibold">Units with Approved Services</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Unit Name</th>
+                                    <th class="text-center">Services</th>
+                                    <th class="text-end">Total Amount (Rs)</th>
+                                    <th class="text-center pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit in approved_units %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="unit-avatar">
+                                                <i class="bi bi-diagram-3 text-success"></i>
+                                            </div>
+                                            <strong>{{ unit.name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success bg-opacity-15 text-success rounded-pill px-3 py-1">
+                                            {{ unit.service_count }} Service(s)
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold text-success">Rs {{ "{:,.2f}".format(unit.total_amount) }}</td>
+                                    <td class="text-center pe-4">
+                                        <a href="{{ url_for('record_assistant.unit_services', unit_id=unit.id) }}?status=approved&month={{ selected_month }}&year={{ selected_year }}" class="btn btn-info rounded-pill px-3">
+                                            <i class="bi bi-eye me-1"></i> View Services
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        <i class="bi bi-check-circle fs-3"></i>
+                                        <p class="mt-2 mb-0">No units with approved services</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% if approved_units %}
+                            <tfoot class="tfoot-total">
+                                <tr>
+                                    <td colspan="2" class="text-end fw-bold ps-4">Total:</td>
+                                    <td class="text-end fw-bold text-success pe-4">Rs {{ "{:,.2f}".format(approved_total) }}</td>
+                                    <td class="pe-4"></td>
+                                </tr>
+                            </tfoot>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REJECTED UNITS -->
+        <div class="tab-pane fade" id="rejected">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header-custom bg-gradient-danger text-white">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-x-circle fs-5"></i>
+                        <h5 class="mb-0 fw-semibold">Units with Rejected Services</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Unit Name</th>
+                                    <th class="text-center">Services</th>
+                                    <th class="text-end">Total Amount (Rs)</th>
+                                    <th class="text-center pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit in rejected_units %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="unit-avatar">
+                                                <i class="bi bi-diagram-3 text-danger"></i>
+                                            </div>
+                                            <strong>{{ unit.name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger bg-opacity-15 text-danger rounded-pill px-3 py-1">
+                                            {{ unit.service_count }} Service(s)
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold text-danger">Rs {{ "{:,.2f}".format(unit.total_amount) }}</td>
+                                    <td class="text-center pe-4">
+                                        <a href="{{ url_for('record_assistant.unit_services', unit_id=unit.id) }}?status=rejected&month={{ selected_month }}&year={{ selected_year }}" class="btn btn-info rounded-pill px-3">
+                                            <i class="bi bi-eye me-1"></i> View Services
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        <i class="bi bi-check-circle fs-3"></i>
+                                        <p class="mt-2 mb-0">No units with rejected services</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% if rejected_units %}
+                            <tfoot class="tfoot-total">
+                                <tr>
+                                    <td colspan="2" class="text-end fw-bold ps-4">Total:</td>
+                                    <td class="text-end fw-bold text-danger pe-4">Rs {{ "{:,.2f}".format(rejected_total) }}</td>
+                                    <td class="pe-4"></td>
+                                </tr>
+                            </tfoot>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Flash messages handling
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                Swal.fire({
+                    icon: '{{ "success" if category == "success" else "error" if category == "danger" else "warning" if category == "warning" else "info" }}',
+                    title: '{{ category|title }}',
+                    text: {{ message|tojson }},
+                    confirmButtonColor: '#1E3A5F'
+                });
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    // Preserve active tab after page reload
+    const activeTab = localStorage.getItem('activeRecordAssistantTab');
+    if (activeTab) {
+        const tabElement = document.querySelector(`button[data-bs-target="${activeTab}"]`);
+        if (tabElement) {
+            const tab = new bootstrap.Tab(tabElement);
+            tab.show();
+        }
+    }
+    
+    // Save active tab on click
+    document.querySelectorAll('#statusTab button').forEach(button => {
+        button.addEventListener('shown.bs.tab', event => {
+            const target = event.target.getAttribute('data-bs-target');
+            localStorage.setItem('activeRecordAssistantTab', target);
+        });
+    });
+});
+</script>
+
+<style>
+    .bg-opacity-15 {
+        --bs-bg-opacity: 0.15;
+    }
+    .bg-warning.bg-opacity-15 {
+        background-color: rgba(217, 119, 6, 0.15) !important;
+    }
+    .bg-success.bg-opacity-15 {
+        background-color: rgba(5, 150, 105, 0.15) !important;
+    }
+    .bg-danger.bg-opacity-15 {
+        background-color: rgba(220, 38, 38, 0.15) !important;
+    }
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #0a1f44 0%, #d6d4da 100%);
+    }
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #002b5b 0%, #d6d4da 100%);
+    }
+    .bg-gradient-danger {
+       background: linear-gradient(135deg, #003f88 0%, #d6d4da 100%);
+    }
+</style>
+{% endblock %}

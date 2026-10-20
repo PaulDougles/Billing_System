@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Workflow History - Service #{{ service.id }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+    /* Modern Timeline Styles */
+    .timeline-modern {
+        position: relative;
+        padding: 0;
+    }
+    
+    .timeline-modern:before {
+        content: '';
+        position: absolute;
+        left: 28px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, #e9ecef 0%, #dee2e6 100%);
+    }
+    
+    .timeline-item-modern {
+        position: relative;
+        display: flex;
+        margin-bottom: 0;
+        padding: 16px 0 16px 60px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.2s ease;
+    }
+    
+    .timeline-item-modern:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .timeline-item-modern:last-child {
+        border-bottom: none;
+    }
+    
+    /* Icon Colors - Action Based */
+    .timeline-icon-submitted { background: linear-gradient(135deg, #0d6efd, #0a58ca); }
+    .timeline-icon-approved { background: linear-gradient(135deg, #198754, #157347); }
+    .timeline-icon-rejected { background: linear-gradient(135deg, #dc3545, #bb2d3b); }
+    .timeline-icon-pending { background: linear-gradient(135deg, #ffc107, #ffca2c); color: #000 !important; }
+    .timeline-icon-resubmitted { background: linear-gradient(135deg, #fd7e14, #e9690e); }
+    .timeline-icon-invoice { background: linear-gradient(135deg, #0dcaf0, #0aa2c4); }
+    .timeline-icon-updated { background: linear-gradient(135deg, #6c757d, #5c636a); }
+    .timeline-icon-info { background: linear-gradient(135deg, #6c757d, #5c636a); }
+    
+    .timeline-icon-submitted,
+    .timeline-icon-approved,
+    .timeline-icon-rejected,
+    .timeline-icon-pending,
+    .timeline-icon-resubmitted,
+    .timeline-icon-invoice,
+    .timeline-icon-updated,
+    .timeline-icon-info {
+        position: absolute;
+        left: 12px;
+        top: 16px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .timeline-item-modern:hover .timeline-icon-submitted,
+    .timeline-item-modern:hover .timeline-icon-approved,
+    .timeline-item-modern:hover .timeline-icon-rejected,
+    .timeline-item-modern:hover .timeline-icon-pending,
+    .timeline-item-modern:hover .timeline-icon-resubmitted,
+    .timeline-item-modern:hover .timeline-icon-invoice,
+    .timeline-item-modern:hover .timeline-icon-updated,
+    .timeline-item-modern:hover .timeline-icon-info {
+        transform: scale(1.05);
+    }
+    
+    .timeline-content-modern {
+        flex: 1;
+        background: #fff;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    
+    /* Status Badge Colors */
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-approved { background: #d1e7dd; color: #0f5132; }
+    .status-rejected { background: #f8d7da; color: #842029; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-submitted { background: #cfe2ff; color: #084298; }
+    .status-invoiced { background: #cff4fc; color: #055160; }
+    
+    /* Comment Box */
+    .comment-box-approved {
+        background: #d1e7dd;
+        border-left: 4px solid #198754;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+    .comment-box-rejected {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+    .comment-box-info {
+        background: #e7f1ff;
+        border-left: 4px solid #0d6efd;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+    .comment-box-warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+    
+    /* Details Section */
+    .change-details {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 8px;
+    }
+    
+    .change-details summary {
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .change-details summary:hover {
+        color: #0d6efd;
+    }
+    
+    /* Service Summary Card */
+    .service-summary-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        border-radius: 16px;
+    }
+    
+    /* Action Text Colors */
+    .text-approved { color: #198754 !important; }
+    .text-rejected { color: #dc3545 !important; }
+    .text-pending { color: #ffc107 !important; }
+    .text-submitted { color: #0d6efd !important; }
+    .text-resubmitted { color: #fd7e14 !important; }
+    .text-invoiced { color: #0dcaf0 !important; }
+    
+    /* Hover Effects */
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">
+                <i class="bi bi-clock-history text-primary me-2"></i>
+                Workflow History
+            </h3>
+            <p class="text-muted mt-1 mb-0">
+                {{ service.company_name }}
+            </p>
+        </div>
+        <div>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Service Summary Card - Modern Design -->
+    <div class="card service-summary-card border-0 shadow-sm mb-4 hover-lift">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+                            <i class="bi bi-upc-scan fs-4 text-primary"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Service ID</small>
+                            <strong class="fs-5">{{ service.id }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
+                            <i class="bi bi-building fs-4 text-success"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Company</small>
+                            <strong>{{ service.company_name }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3 me-3">
+                            <i class="bi bi-person-badge fs-4 text-info"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">BU User</small>
+                            <strong>{{ service.bu_user.full_name }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
+                           
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Total Amount</small>
+                            <strong class="fs-5 text-primary">Rs {{ "%.2f"|format(service.total_amount) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Complete Timeline -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-diagram-3 me-2 text-primary"></i>
+                    Activity Timeline
+                </h6>
+                <span class="badge bg-secondary rounded-pill">{{ workflow|length }} events</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if workflow %}
+            <div class="timeline-modern">
+                {% for log in workflow %}
+                {% set action_lower = log.action|lower %}
+                
+                <!-- Determine icon class based on action -->
+                {% if 'submitted' in action_lower or 'submit' in action_lower %}
+                    {% set icon_class = 'timeline-icon-submitted' %}
+                    {% set text_color = 'text-submitted' %}
+                    {% set comment_class = 'comment-box-info' %}
+                {% elif 'approved' in action_lower %}
+                    {% set icon_class = 'timeline-icon-approved' %}
+                    {% set text_color = 'text-approved' %}
+                    {% set comment_class = 'comment-box-approved' %}
+                {% elif 'rejected' in action_lower %}
+                    {% set icon_class = 'timeline-icon-rejected' %}
+                    {% set text_color = 'text-rejected' %}
+                    {% set comment_class = 'comment-box-rejected' %}
+                {% elif 'resubmit' in action_lower %}
+                    {% set icon_class = 'timeline-icon-resubmitted' %}
+                    {% set text_color = 'text-resubmitted' %}
+                    {% set comment_class = 'comment-box-warning' %}
+                {% elif 'invoice' in action_lower %}
+                    {% set icon_class = 'timeline-icon-invoice' %}
+                    {% set text_color = 'text-invoiced' %}
+                    {% set comment_class = 'comment-box-info' %}
+                {% elif 'pending' in action_lower %}
+                    {% set icon_class = 'timeline-icon-pending' %}
+                    {% set text_color = 'text-pending' %}
+                    {% set comment_class = 'comment-box-warning' %}
+                {% else %}
+                    {% set icon_class = 'timeline-icon-updated' %}
+                    {% set text_color = 'text-secondary' %}
+                    {% set comment_class = 'comment-box-info' %}
+                {% endif %}
+                
+                <div class="timeline-item-modern">
+                    <div class="{{ icon_class }}">
+                        <i class="bi {{ log.icon|default('bi-info-circle') }}"></i>
+                    </div>
+                    <div class="timeline-content-modern">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <strong class="fs-6 {{ text_color }}">
+                                    {{ log.action_display|default(log.action|replace('_', ' ')|title) }}
+                                </strong>
+                                <span class="badge bg-light text-dark ms-2">
+                                    {{ log.user_role|replace('_', ' ')|title }}
+                                </span>
+                                {% if log.status_from and log.status_to %}
+                                <span class="badge bg-secondary bg-opacity-10 text-dark ms-2">
+                                    <i class="bi bi-arrow-right-short"></i>
+                                    {{ log.status_from|title }} → {{ log.status_to|title }}
+                                </span>
+                                {% endif %}
+                                {% if log.is_batch %}
+                                <span class="badge bg-info ms-2">
+                                    <i class="bi bi-layers"></i> Batch Action
+                                </span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                <span class="utc-datetime">{{ log.created_at }}</span>
+                            </small>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <span class="small fw-semibold text-muted">By:</span>
+                            <span class="small">{{ log.user_name }}</span>
+                        </div>
+                        
+                        {% if log.comment %}
+                        <div class="mt-3 {{ comment_class }}">
+                            <i class="bi bi-chat-dots me-1"></i>
+                            <strong class="small">Comment:</strong>
+                            <p class="mb-0 small mt-1">{{ log.comment }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if log.details and (log.details.old_description or log.details.new_description) %}
+                        <div class="change-details mt-2">
+                            <details>
+                                <summary class="small">
+                                    <i class="bi bi-eye me-1"></i> View changes made
+                                </summary>
+                                <div class="mt-2">
+                                    {% if log.details.old_description %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-danger mb-1">Before</span>
+                                        <div class="small text-muted bg-white p-2 rounded border">
+                                            {{ log.details.old_description|truncate(200) }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% if log.details.new_description %}
+                                    <div>
+                                        <span class="badge bg-success mb-1">After</span>
+                                        <div class="small text-muted bg-white p-2 rounded border">
+                                            {{ log.details.new_description|truncate(200) }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </details>
+                        </div>
+                        {% endif %}
+                        
+                        {% if log.details and log.details.invoice_number %}
+                        <div class="mt-2">
+                            <span class="badge bg-info">
+                                <i class="bi bi-file-pdf me-1"></i>
+                                Invoice: {{ log.details.invoice_number }}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                </div>
+                <h6 class="text-muted">No workflow history available</h6>
+                <p class="small text-muted">Actions will appear here once the service is processed</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Navigation Footer -->
+    <div class="mt-4 text-center">
+        <a href="javascript:history.back()" class="btn btn-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <button class="btn btn-outline-primary rounded-pill px-4 ms-2" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i> Print
+        </button>
+    </div>
+</div>
+
+<script>
+// Convert UTC timestamps to local time
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof convertUTCToLocal === 'function') {
+        convertUTCToLocal();
+    }
+});
+</script>
+{% endblock %}

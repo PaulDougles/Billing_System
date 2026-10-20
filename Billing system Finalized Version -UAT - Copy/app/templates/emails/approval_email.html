@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service {{ status|title }} - Action Required</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 20px 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; margin: 10px 0; }
+        .status-pending { background-color: #2196F3; color: white; }
+        .status-approved { background-color: #4CAF50; color: white; }
+        .status-rejected { background-color: #f44336; color: white; }
+        .btn { display: inline-block; padding: 12px 24px; margin: 20px 0; background: #2c3e50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        .btn:hover { opacity: 0.9; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .details-table td { padding: 10px 0; border-bottom: 1px solid #E2E8F0; }
+        .details-table td:first-child { font-weight: 500; width: 35%; color: #64748B; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; border-top: 1px solid #eee; background-color: #f9f9f9; }
+        .comment-box { background: #f0f7ff; border-left: 4px solid #3498db; padding: 12px; margin: 15px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Note: This template includes its own high-design header inside the content -->
+    <div class="content" style="padding: 0;">
+<div style="background: #ffffff; border-radius: 12px; overflow: hidden;">
+    
+    <!-- Header Section with Gradient Background -->
+    <div style="background: #667eea; padding: 30px; text-align: center; margin: -30px -30px 25px -30px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">{{ approver_role|title }} Decision</h2>
+        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">Service Review Completed</p>
+    </div>
+
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Hello <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">Your service entry has been <strong>{{ status|upper }}</strong> by <strong>{{ approver_role|title }}</strong>.</p>
+
+    <!-- Status Badge with Professional Design -->
+    <div style="text-align: center; margin: 25px 0;">
+        {% if status == 'approved' %}
+        <div style="display: inline-block; background: #10B981; padding: 12px 30px; border-radius: 50px; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
+            <span style="color: white; font-weight: 700; font-size: 18px; letter-spacing: 1px;">✓ APPROVED</span>
+        </div>
+        {% elif status == 'rejected' %}
+        <div style="display: inline-block; background: #EF4444; padding: 12px 30px; border-radius: 50px; box-shadow: 0 4px 15px rgba(239,68,68,0.3);">
+            <span style="color: white; font-weight: 700; font-size: 18px; letter-spacing: 1px;">✗ REJECTED - ACTION REQUIRED</span>
+        </div>
+        {% else %}
+        <div style="display: inline-block; background: #F59E0B; padding: 12px 30px; border-radius: 50px; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">
+            <span style="color: white; font-weight: 700; font-size: 18px; letter-spacing: 1px;">⏳ PENDING REVIEW</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Service Details Card -->
+    <div style="background: #F8FAFE; border-radius: 16px; padding: 20px; margin: 25px 0; border: 1px solid #E2E8F0;">
+        <h3 style="color: #1E293B; font-size: 16px; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #E2E8F0;">
+            📋 Service Details
+        </h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Company</td>
+                <td style="padding: 10px 0;">{{ service.company_name }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Description</td>
+                <td style="padding: 10px 0;">{{ service.description }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Reviewed By</td>
+                <td style="padding: 10px 0;"><strong>{{ approver_role|title }}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Total Amount</td>
+                <td style="padding: 10px 0;">
+                    <span style="background: #667eea; color: white; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 16px;">
+                        Rs {{ "%.2f"|format(service.total_amount) }}
+                    </span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Comment Section with Background -->
+    {% if comment %}
+    <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; border-radius: 12px; padding: 18px; margin: 20px 0;">
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 20px; margin-right: 8px;">💬</span>
+            <strong style="color: #92400E;">{{ approver_role|title }} Comment</strong>
+        </div>
+        <p style="margin: 0; color: #78350F; line-height: 1.5; font-style: italic;">"{{ comment }}"</p>
+    </div>
+    {% endif %}
+
+    <!-- Action Button -->
+    <div style="text-align: center; margin: 30px 0 20px 0;">
+        <a href="{{ dashboard_url }}" style="display: inline-block; background: #667eea; color: white; text-decoration: none; padding: 12px 32px; border-radius: 50px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 15px rgba(102,126,234,0.3);">
+            📊 Go to Dashboard
+        </a>
+    </div>
+
+    <!-- Next Steps Section -->
+    {% if status == 'rejected' %}
+    <div style="background: #FEE2E2; border-radius: 12px; padding: 15px; margin: 20px 0; border: 1px solid #FECACA;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 18px; margin-right: 8px;">⚠️</span>
+            <strong style="color: #991B1B;">Next Steps Required</strong>
+        </div>
+        <p style="margin: 0; color: #7F1D1D; font-size: 14px;">
+            Please review the comment above, make the necessary changes, and resubmit your service for approval.
+        </p>
+    </div>
+    {% elif status == 'approved' %}
+    <div style="background: #D1FAE5; border-radius: 12px; padding: 15px; margin: 20px 0; border: 1px solid #A7F3D0;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 18px; margin-right: 8px;">🎉</span>
+            <strong style="color: #065F46;">Great News!</strong>
+        </div>
+        <p style="margin: 0; color: #065F46; font-size: 14px;">
+            Your service has been approved and will proceed to the next stage of the workflow.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Footer Note -->
+    <div style="background: #F1F5F9; border-radius: 8px; padding: 12px; margin-top: 25px; text-align: center;">
+        <p style="margin: 0; color: #64748B; font-size: 12px;">
+            This is an automated notification. Please do not reply to this email.
+        </p>
+    </div>
+    
+</div>
+    </div>
+    <div class="footer">
+        <p>This is an automated message from Invoice System. Please do not reply to this email.</p>
+        <p>&copy; 2024 Invoice System. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

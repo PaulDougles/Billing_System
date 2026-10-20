@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Service Awaiting Your Approval</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 20px 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; margin: 10px 0; }
+        .status-pending { background-color: #2196F3; color: white; }
+        .status-approved { background-color: #4CAF50; color: white; }
+        .status-rejected { background-color: #f44336; color: white; }
+        .btn { display: inline-block; padding: 12px 24px; margin: 20px 0; background: #2c3e50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        .btn:hover { opacity: 0.9; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .details-table td { padding: 10px 0; border-bottom: 1px solid #E2E8F0; }
+        .details-table td:first-child { font-weight: 500; width: 35%; color: #64748B; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; border-top: 1px solid #eee; background-color: #f9f9f9; }
+        .comment-box { background: #f0f7ff; border-left: 4px solid #3498db; padding: 12px; margin: 15px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Note: This template includes its own header inside the content -->
+    <div class="content" style="padding: 0;">
+<div style="background: #ffffff; border-radius: 12px; overflow: hidden;">
+    
+    <!-- Header Section with Gradient Background -->
+    <div style="background: #667eea; padding: 30px; text-align: center; margin: -30px -30px 25px -30px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Action Required</h2>
+        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">New Service Waiting for Your Approval</p>
+    </div>
+
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Hello <strong>{{ supervisor.first_name }} {{ supervisor.last_name }}</strong>,</p>
+
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">
+        A new service entry has been submitted by <strong>{{ bu_user.full_name }}</strong> and is <strong style="color: #F59E0B;">awaiting your approval</strong>.
+    </p>
+
+    <!-- Status Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+        <div style="display: inline-block; background: #F59E0B; padding: 12px 30px; border-radius: 50px; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">
+            <span style="color: white; font-weight: 700; font-size: 18px; letter-spacing: 1px;">⏳ PENDING YOUR REVIEW</span>
+        </div>
+    </div>
+
+    <!-- Service Details Card -->
+    <div style="background: #F8FAFE; border-radius: 16px; padding: 20px; margin: 25px 0; border: 1px solid #E2E8F0;">
+        <h3 style="color: #1E293B; font-size: 16px; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #E2E8F0;">
+            📋 Service Details
+        </h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; width: 35%; color: #64748B; font-weight: 500;">Submitted By</td>
+                <td style="padding: 10px 0; width: 65%;">
+                    <strong>{{ bu_user.full_name }}</strong><br>
+                    <span style="font-size: 12px; color: #64748B;">ID: {{ bu_user.employee_id }}</span>
+                </td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Unit</td>
+                <td style="padding: 10px 0;">
+                    <span style="background: #E2E8F0; padding: 4px 12px; border-radius: 20px; font-size: 13px;">
+                        {{ unit_name }}
+                    </span>
+                </td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Company</td>
+                <td style="padding: 10px 0;">
+                    <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px;">
+                        {{ company.name }}
+                    </span>
+                </td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Service Date</td>
+                <td style="padding: 10px 0;">
+                    <span style="background: #E2E8F0; padding: 4px 12px; border-radius: 20px; font-size: 13px;">
+                        {{ entry.service_date.strftime('%Y-%m-%d') if entry.service_date else 'N/A' }}
+                    </span>
+                </td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Description</td>
+                <td style="padding: 10px 0; line-height: 1.5;">{{ service.service_description }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; color: #64748B; font-weight: 500;">Total Amount</td>
+                <td style="padding: 10px 0;">
+                    <span style="background: #667eea; color: white; padding: 5px 15px; border-radius: 25px; font-weight: 700; font-size: 16px;">
+                        Rs {{ "%.2f"|format(service.total_amount) }}
+                    </span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Resources Section -->
+    {% if resources_html %}
+    <div style="background: #F0FDF4; border-radius: 16px; padding: 20px; margin: 20px 0; border: 1px solid #DCFCE7;">
+        <h3 style="color: #166534; font-size: 16px; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">
+            <span>📦</span> Resources Allocated
+        </h3>
+        {{ resources_html|safe }}
+    </div>
+    {% endif %}
+
+   
+
+    <!-- Action Button -->
+    <div style="text-align: center; margin: 30px 0 20px 0;">
+        <a href="{{ review_url }}" style="display: inline-block; background: #667eea; color: white; text-decoration: none; padding: 12px 32px; border-radius: 50px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 15px rgba(102,126,234,0.3);">
+            👁️ Review Service Now
+        </a>
+    </div>
+
+   
+
+    <!-- Footer Note -->
+    <div style="background: #F1F5F9; border-radius: 8px; padding: 12px; margin-top: 25px; text-align: center;">
+        <p style="margin: 0; color: #64748B; font-size: 12px;">
+            This service requires your attention. Please review at your earliest convenience.
+        </p>
+    </div>
+    
+</div>
+    </div>
+    <div class="footer">
+        <p>This is an automated message from Invoice System. Please do not reply to this email.</p>
+        <p>&copy; 2024 Invoice System. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
